@@ -4,24 +4,19 @@ window.uiManager = (() => {
         const header = document.querySelector('header.fixed-top');
         const nav = document.querySelector('nav.navigation-tabs');
         if (!header || !nav || !document.body) return;
-
         const root = document.documentElement;
         const isMobileLayout = typeof window.matchMedia === 'function'
             ? window.matchMedia('(max-width: 991.98px)').matches
             : window.innerWidth <= 991;
-
         const headerHeight = Math.ceil(header.getBoundingClientRect().height);
         const navHeight = Math.ceil(nav.getBoundingClientRect().height);
-
         root.style.setProperty('--header-height', `${headerHeight}px`);
         root.style.setProperty('--nav-height', `${navHeight}px`);
-
         if (isMobileLayout) {
             document.body.style.setProperty('--sticky-header-offset', '0px');
             nav.style.top = '';
             return;
         }
-
         document.body.style.setProperty('--sticky-header-offset', `${headerHeight + navHeight}px`);
         nav.style.top = `${headerHeight}px`;
     }
@@ -29,12 +24,10 @@ window.uiManager = (() => {
     function updateCohortButtonsUI(currentCohortId, isLocked) {
         if (!window.APP_CONFIG) return;
         const cohortButtonGroup = document.querySelector('.btn-group[aria-label="Cohort Selection"]');
-        
         if (cohortButtonGroup) {
             const tooltipContent = isLocked 
                 ? "Cohort selection is locked because a specific analysis context (e.g., literature comparison) or view (e.g., statistics comparison) is active." 
                 : "Select the patient cohort for analysis.";
-            
             let tippyInstance = cohortButtonGroup._tippy;
             if (tippyInstance) {
                 tippyInstance.setContent(tooltipContent);
@@ -42,7 +35,6 @@ window.uiManager = (() => {
                 tippy(cohortButtonGroup, { content: tooltipContent });
             }
         }
-
         Object.values(window.APP_CONFIG.COHORTS).forEach(cohort => {
             const button = document.getElementById(`btn-cohort-${cohort.id}`);
             if (button) {
@@ -58,7 +50,6 @@ window.uiManager = (() => {
         if (paneElement) {
             const oldTippys = paneElement.querySelectorAll('[data-tippy-content]');
             oldTippys.forEach(el => { if (el._tippy) el._tippy.destroy(); });
-
             paneElement.innerHTML = contentGenerator();
             initializeTooltips(paneElement);
         }
@@ -67,19 +58,15 @@ window.uiManager = (() => {
     function attachRowCollapseListeners(tableBodyId) {
         const tableBody = document.getElementById(tableBodyId);
         if (!tableBody) return;
-
         function handleRowClick(event) {
             const row = event.currentTarget;
             if (!row) return;
-
             const isToggleButton = event.target.closest('.row-toggle-button');
             const targetId = row.dataset.bsTarget;
             const collapseElement = targetId ? document.querySelector(targetId) : null;
             if (!collapseElement) return;
-
             const bsCollapse = bootstrap.Collapse.getInstance(collapseElement);
             if (!bsCollapse) return;
-
             if (isToggleButton) {
                 bsCollapse.toggle();
             } else {
@@ -91,11 +78,9 @@ window.uiManager = (() => {
                 }
             }
         }
-    
         tableBody.querySelectorAll('tr.clickable-row').forEach(row => {
             row.removeEventListener('click', handleRowClick);
             row.addEventListener('click', handleRowClick);
-            
             const collapseElement = document.querySelector(row.dataset.bsTarget);
             if (collapseElement) {
                 collapseElement.addEventListener('show.bs.collapse', () => {
@@ -122,10 +107,8 @@ window.uiManager = (() => {
         const tableBody = document.getElementById(tableBodyId);
         const toggleButton = document.getElementById(toggleButtonId);
         if (!tableBody || !toggleButton) return;
-
         const isExpanding = toggleButton.dataset.action === 'expand';
         const rows = tableBody.querySelectorAll('tr.clickable-row');
-
         rows.forEach(row => {
             const targetId = row.dataset.bsTarget;
             const collapseElement = targetId ? document.querySelector(targetId) : null;
@@ -138,7 +121,6 @@ window.uiManager = (() => {
                 }
             }
         });
-
         toggleButton.dataset.action = isExpanding ? 'collapse' : 'expand';
         toggleButton.innerHTML = isExpanding ? 'Collapse All Details <i class="fas fa-chevron-up ms-1"></i>' : 'Expand All Details <i class="fas fa-chevron-down ms-1"></i>';
     }
@@ -146,7 +128,6 @@ window.uiManager = (() => {
     function updateSortIcons(tableHeaderId, sortState) {
         const header = document.getElementById(tableHeaderId);
         if (!header) return;
-
         header.querySelectorAll('th[data-sort-key]').forEach(th => {
             let sortIcon = th.querySelector('.fa-sort, .fa-sort-up, .fa-sort-down');
             if (!sortIcon) {
@@ -154,7 +135,6 @@ window.uiManager = (() => {
                 sortIcon.className = 'fas fa-sort text-muted opacity-50 ms-1';
                 th.appendChild(sortIcon);
             }
-
             sortIcon.className = 'fas ms-1';
             if (th.dataset.sortKey === sortState.key) {
                 const subHeaders = th.querySelectorAll('.sortable-sub-header');
@@ -199,9 +179,7 @@ window.uiManager = (() => {
 
     function initializeTooltips(containerElement) {
         if (typeof tippy === 'undefined' || !containerElement) return;
-
         const elementsWithTooltips = containerElement.querySelectorAll('[data-tippy-content]');
-
         elementsWithTooltips.forEach(element => {
             if (element._tippy) {
                 element._tippy.destroy();
@@ -212,7 +190,6 @@ window.uiManager = (() => {
                 if (content.toLowerCase().includes('warning') || content.toLowerCase().includes('error')) {
                     theme = 'warning';
                 }
-
                 tippy(element, {
                     content: content,
                     allowHTML: true,
@@ -240,28 +217,19 @@ window.uiManager = (() => {
         if (typeof bootstrap === 'undefined') return;
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) return;
-
         const toastElement = document.createElement('div');
         toastElement.className = `toast align-items-center text-white bg-${type} border-0 fade show`;
         toastElement.setAttribute('role', 'alert');
         toastElement.setAttribute('aria-live', 'assertive');
         toastElement.setAttribute('aria-atomic', 'true');
         toastElement.style.maxWidth = '350px';
-        toastElement.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        `;
-
+        toastElement.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
         toastContainer.appendChild(toastElement);
-
         const bsToast = new bootstrap.Toast(toastElement, {
             delay: duration,
             autohide: true
         });
         bsToast.show();
-
         toastElement.addEventListener('hidden.bs.toast', () => {
             toastElement.remove();
         });
@@ -269,9 +237,7 @@ window.uiManager = (() => {
 
     function updateT2CriteriaControlsUI(currentCriteria, currentLogic) {
         if (!window.APP_CONFIG || !window.utils) return;
-
         const isEsgarMode = currentLogic === 'KOMBINIERT';
-
         ['size', 'shape', 'border', 'homogeneity', 'signal'].forEach(key => {
             const checkbox = document.getElementById(`check-${key}`);
             if (checkbox) {
@@ -279,14 +245,12 @@ window.uiManager = (() => {
                 checkbox.disabled = isEsgarMode;
             }
         });
-
         const sizeThreshold = currentCriteria.size?.threshold ?? window.APP_CONFIG.DEFAULT_T2_CRITERIA.size.threshold;
         const formattedThresholdForInput = formatNumber(sizeThreshold, 1, '5.0', true);
         const rangeSize = document.getElementById('range-size');
         const inputSize = document.getElementById('input-size');
         const valueSize = document.getElementById('value-size');
         const isSizeActive = currentCriteria.size?.active;
-
         if (rangeSize) {
             rangeSize.value = formattedThresholdForInput;
             rangeSize.disabled = !isSizeActive || isEsgarMode;
@@ -298,12 +262,10 @@ window.uiManager = (() => {
         if (valueSize) {
             valueSize.textContent = formatNumber(sizeThreshold, 1);
         }
-
         ['shape', 'border', 'homogeneity', 'signal'].forEach(key => {
             const optionsContainer = document.querySelector(`.criteria-group:has(#check-${key}) .criteria-options-container`);
             const isKeyActive = currentCriteria[key]?.active;
             const currentValue = currentCriteria[key]?.value;
-
             if (optionsContainer) {
                 optionsContainer.querySelectorAll('.t2-criteria-button').forEach(button => {
                     const buttonValue = button.dataset.value;
@@ -313,7 +275,6 @@ window.uiManager = (() => {
                 });
             }
         });
-
         const logicSwitch = document.getElementById('t2-logic-switch');
         const logicLabel = document.getElementById('t2-logic-label');
         if (logicSwitch) {
@@ -339,23 +300,18 @@ window.uiManager = (() => {
     function updateBruteForceUI(state, payload, bfWorkerAvailable, currentCohort) {
         const runnerCardContainer = document.getElementById('brute-force-runner-card-container');
         if (!runnerCardContainer) return;
-
         const selectedMetric = document.getElementById('brute-force-metric')?.value || window.APP_CONFIG.DEFAULT_SETTINGS.PUBLICATION_BRUTE_FORCE_METRIC;
         const runnerCardHTML = window.uiComponents.createBruteForceRunnerCardHTML(state, payload, bfWorkerAvailable, currentCohort, selectedMetric);
-        
         updateElementHTML(runnerCardContainer.id, runnerCardHTML);
     }
 
     function updateComparisonViewUI(view, selectedStudyId) {
         if (!window.APP_CONFIG || !window.utils || !window.studyT2CriteriaManager) return;
-        
         const asPerfBtn = document.getElementById('view-as-perf');
         const asVsT2Btn = document.getElementById('view-as-vs-t2');
         const compStudySelect = document.getElementById('comp-study-select');
-
         if (asPerfBtn) asPerfBtn.checked = (view === 'as-pur');
         if (asVsT2Btn) asVsT2Btn.checked = (view === 'as-vs-t2');
-
         if (compStudySelect) {
             compStudySelect.disabled = (view === 'as-pur');
         }
@@ -410,7 +366,6 @@ window.uiManager = (() => {
         if (!statusContainer) return;
         const progressBar = statusContainer.querySelector('.progress-bar');
         const statusP = statusContainer.querySelector('p');
-
         if (statusP) {
             statusP.innerHTML = statusText;
         }

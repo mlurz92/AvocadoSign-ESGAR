@@ -348,13 +348,13 @@ class App {
         this.refreshCurrentTab();
         window.uiManager.markCriteriaSavedIndicator(false);
         window.uiManager.showToast('T2 criteria applied & saved.', 'success');
+        window.uiManager.updateT2CriteriaControlsUI(window.t2CriteriaManager.getCurrentCriteria(), window.t2CriteriaManager.getCurrentLogic());
     }
 
     applyEsgarCriteria() {
         window.t2CriteriaManager.updateLogic('KOMBINIERT');
         this.applyAndRefreshAll();
         window.uiManager.showToast('ESGAR 2016 criteria applied.', 'info');
-        window.uiManager.updateT2CriteriaControlsUI(window.t2CriteriaManager.getCurrentCriteria(), window.t2CriteriaManager.getCurrentLogic());
     }
 
     startBruteForceAnalysis() {
@@ -395,7 +395,6 @@ class App {
         });
         window.t2CriteriaManager.updateLogic(best.logic);
         this.applyAndRefreshAll();
-        window.uiManager.updateT2CriteriaControlsUI(window.t2CriteriaManager.getCurrentCriteria(), window.t2CriteriaManager.getCurrentLogic());
     }
 
     showBruteForceDetails(metric, cohortId = null) {

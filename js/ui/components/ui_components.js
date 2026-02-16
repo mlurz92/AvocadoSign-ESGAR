@@ -92,15 +92,21 @@ window.uiComponents = (() => {
                         ${createCriteriaGroup('signal', 'Signal', 't2Signal', createButtonOptions)}
                         <div class="col-12 d-flex justify-content-between align-items-center border-top pt-3 mt-3">
                             <div>
-                                <button class="btn btn-sm btn-outline-primary" id="btn-apply-esgar" data-tippy-content="${tooltips.t2Actions.esgar}">
-                                    <i class="fas fa-gavel me-1"></i> Apply ESGAR 2016
-                                </button>
+                                ${isEsgarLogic ? `
+                                    <button class="btn btn-sm btn-warning" id="btn-exit-esgar" data-tippy-content="Exit ESGAR mode and return to manual criteria definition.">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Exit ESGAR Mode
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-sm btn-outline-primary" id="btn-apply-esgar" data-tippy-content="${tooltips.t2Actions.esgar}">
+                                        <i class="fas fa-gavel me-1"></i> Apply ESGAR 2016
+                                    </button>
+                                `}
                             </div>
                             <div class="d-flex">
-                                <button class="btn btn-sm btn-outline-secondary me-2" id="btn-reset-criteria" data-tippy-content="${tooltips.t2Actions.reset}">
+                                <button class="btn btn-sm btn-outline-secondary me-2" id="btn-reset-criteria" data-tippy-content="${tooltips.t2Actions.reset}" ${isEsgarLogic ? 'disabled' : ''}>
                                     <i class="fas fa-undo me-1"></i> Reset to Default
                                 </button>
-                                <button class="btn btn-sm btn-primary" id="btn-apply-criteria" data-tippy-content="${tooltips.t2Actions.apply}">
+                                <button class="btn btn-sm btn-primary" id="btn-apply-criteria" data-tippy-content="${tooltips.t2Actions.apply}" ${isEsgarLogic ? 'disabled' : ''}>
                                     <i class="fas fa-check me-1"></i> Apply & Save
                                 </button>
                             </div>

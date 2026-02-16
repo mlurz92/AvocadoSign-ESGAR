@@ -37,7 +37,7 @@ window.t2CriteriaManager = (() => {
     }
 
     function updateCriterionValue(key, value) {
-        if (!currentCriteria || !currentCriteria[key]) return false;
+        if (currentLogic === 'KOMBINIERT' || !currentCriteria || !currentCriteria[key]) return false;
         const allowedValuesKey = key.toUpperCase() + '_VALUES';
         const allowedValues = window.APP_CONFIG.T2_CRITERIA_SETTINGS[allowedValuesKey];
         if (allowedValues && !allowedValues.includes(value)) return false;
@@ -50,6 +50,7 @@ window.t2CriteriaManager = (() => {
     }
 
     function updateCriterionThreshold(value) {
+        if (currentLogic === 'KOMBINIERT') return false;
         const numValue = parseFloat(value);
         if (!currentCriteria || !currentCriteria.size || isNaN(numValue) || !isFinite(numValue)) return false;
         const clampedValue = clampNumber(numValue, window.APP_CONFIG.T2_CRITERIA_SETTINGS.SIZE_RANGE.min, window.APP_CONFIG.T2_CRITERIA_SETTINGS.SIZE_RANGE.max);
@@ -62,7 +63,7 @@ window.t2CriteriaManager = (() => {
     }
 
     function toggleCriterionActive(key, isActive) {
-        if (!currentCriteria || !currentCriteria[key]) return false;
+        if (currentLogic === 'KOMBINIERT' || !currentCriteria || !currentCriteria[key]) return false;
         const isActiveBool = !!isActive;
         if (currentCriteria[key].active !== isActiveBool) {
             currentCriteria[key].active = isActiveBool;

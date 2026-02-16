@@ -32,10 +32,8 @@ window.eventManager = (() => {
         if (mainTabEl) {
             mainTabEl.addEventListener('shown.bs.tab', handleTabShown);
         }
-
         window.addEventListener('resize', debouncedLayoutUpdate);
         window.addEventListener('orientationchange', debouncedLayoutUpdate);
-
         const ensureLayoutMetrics = () => window.uiManager?.updateLayoutMetrics?.();
         if (document.readyState === 'complete') {
             ensureLayoutMetrics();
@@ -57,26 +55,21 @@ window.eventManager = (() => {
     function handleBodyClick(event) {
         const target = event.target;
         const button = target.closest('button');
-
         if (button?.dataset.cohort && !button.disabled && !button.dataset.action) {
             app.handleCohortChange(button.dataset.cohort, "user");
             return;
         }
-
         if (target.closest('th[data-sort-key]')) {
             const header = target.closest('th[data-sort-key]');
             const subHeader = target.closest('.sortable-sub-header');
             handleSortClick(header, subHeader);
             return;
         }
-
         if (!button || button.disabled) return;
-        
         if (button.dataset.action === 'apply-saved-bf') {
             app.applyBestBruteForceCriteria(button.dataset.metric, button.dataset.cohort);
             return;
         }
-
         const singleClickActions = {
             'btn-quick-guide': () => window.uiManager.showQuickGuide(),
             'data-toggle-details': () => window.uiManager.toggleAllDetails('data-table-body', button.id),
@@ -89,6 +82,13 @@ window.eventManager = (() => {
             },
             'btn-apply-criteria': () => app.applyAndRefreshAll(),
             'btn-apply-esgar': () => app.applyEsgarCriteria(),
+            'btn-exit-esgar': () => {
+                window.t2CriteriaManager.updateLogic('AND');
+                window.uiManager.updateT2CriteriaControlsUI(window.t2CriteriaManager.getCurrentCriteria(), window.t2CriteriaManager.getCurrentLogic());
+                window.uiManager.markCriteriaSavedIndicator(window.t2CriteriaManager.isUnsaved());
+                app.applyAndRefreshAll();
+                window.uiManager.showToast('Exited ESGAR Mode. Manual criteria definition enabled.', 'info');
+            },
             'btn-start-brute-force': () => app.startBruteForceAnalysis(),
             'btn-cancel-brute-force': () => window.bruteForceManager.cancelAnalysis(),
             'btn-apply-best-bf-criteria': () => {
@@ -106,12 +106,10 @@ window.eventManager = (() => {
             'btn-confirm-auto-bf': () => app.startSequentialBruteForce(),
             'btn-decline-auto-bf': () => app.declineAutoBf()
         };
-
         if (singleClickActions[button.id]) {
             singleClickActions[button.id]();
             return;
         }
-        
         if (button.classList.contains('t2-criteria-button')) {
             if (window.t2CriteriaManager.updateCriterionValue(button.dataset.criterion, button.dataset.value)) {
                 window.uiManager.updateT2CriteriaControlsUI(window.t2CriteriaManager.getCurrentCriteria(), window.t2CriteriaManager.getCurrentLogic());
@@ -127,7 +125,6 @@ window.eventManager = (() => {
             handleT2CheckboxChange(target);
             return;
         }
-        
         const changeActions = {
             't2-logic-switch': () => handleT2LogicChange(target),
             'brute-force-metric': () => app.refreshCurrentTab(),
@@ -139,12 +136,10 @@ window.eventManager = (() => {
             'power-mode-posthoc': () => window.insightsTab.renderPowerAnalysis(app.allCohortStats),
             'power-mode-samplesize': () => window.insightsTab.renderPowerAnalysis(app.allCohortStats)
         };
-        
         if (changeActions[target.id]) {
             changeActions[target.id]();
             return;
         }
-
         if (target.name === 'comparisonView') {
             handleComparisonViewChange(target.value);
             return;
@@ -162,7 +157,6 @@ window.eventManager = (() => {
             const sizeRangeInput = document.getElementById('range-size');
             const sizeManualInput = document.getElementById('input-size');
             const newValue = formatNumber(target.value, 1, '', true);
-
             if (target.id === 'range-size') {
                 if(sizeValueDisplay) sizeValueDisplay.textContent = formatNumber(newValue, 1);
                 if(sizeManualInput) sizeManualInput.value = newValue;
