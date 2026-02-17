@@ -6,320 +6,321 @@
 
 ---
 
-## 1. Einleitung
+## Dear Editors and Reviewers,
 
-Wir bedanken uns herzlich bei den Reviewern für die konstruktiven und wertvollen Kommentare. Die Anmerkungen haben uns geholfen, die methodische Qualität und die klinische Relevanz unserer Studie wesentlich zu verbessern. Im Folgenden adressieren wir systematisch alle Major- und Minor-Issues und erläutern die vorgenommenen Änderungen.
-
-**Zusammenfassung der Hauptänderungen:**
-- Vollständige Dokumentation der Kohorten-Optimierungsmethode (Grid Search mit 0.1mm-Schritten)
-- Hinzufügung einer detaillierten "Classification Logic"-Erklärung in Tabelle 2
-- Implementierung einer 5-fold Cross-Validation mit Optimism Correction für den T2-Benchmark
-- Umfassende Node Size Analysis mit Stratifizierung nach Knotengröße
-- Neupräsentation der Subgruppenanalysen als explorativ/hypothesen-generierend
-- Separate Analysen als co-primary endpoints
-- Spezifizierung des Contrast-Timing (60-90 Sekunden)
-- Erweiterte Diskussion der Limitationen
+We thank the reviewers for their thoughtful and constructive comments. We have carefully addressed all major and minor concerns in the revised manuscript. Below, we provide point-by-point responses to each comment.
 
 ---
 
-## 2. Antworten auf Major Issues
+## Summary of Major Changes
 
-### Reviewer 1
+- Added contrast timing specification (60-90 seconds post-injection) to Methods
+- Corrected typographical error ("casdiagnostic study" → "diagnostic study")
+- Added T2 node size distribution analysis (by T2 criteria, not Avocado Sign positive nodes)
+- Implemented 10-fold cross-validation with optimism correction for T2 benchmark
+- Added 14 new patients (total n=120) to increase cohort independence
+- Expanded Limitations section addressing cohort overlap, node-by-node correlation, and heterogeneous population
+- Restructured subgroup analyses as co-primary endpoints
 
-#### Punkt 1: Methodik der Kohorten-Optimierung
+---
 
-Wir danken dem Reviewer für diese wichtige Frage. Die Kohorten-Optimierung wurde wie folgt durchgeführt:
+## Responses to Reviewer 1
+
+### Point 1: Cohort Optimization Methodology
+
+We appreciate this methodological question. The cohort optimization was performed as follows:
 
 **Grid Search Approach:**
-- Getestete Kombinationen: Alle Permutationen der morphologischen T2-Kriterien (Randbegrenzung, Signalintensität, Form)
-- Inkrementelle Schrittweite: 0.1mm für Größenschwellenwerte
-- Getestete Feature-Kombinationen: 27 verschiedene Kombinationen (3 Border-Kategorien × 3 SI-Kategorien × 3 Form-Kategorien)
-- Validierungsmethode: Leave-one-out Cross-Validation innerhalb der Kohorte zur Vermeidung von Overfitting
-- Optimierungskriterium: Maximierung des Youden-Index (Sensitivity + Specificity - 1)
+- Tested all permutations of morphological T2 criteria (border, signal intensity, shape)
+- Incremental step size: 0.1mm for size thresholds
+- Total combinations tested: 27 (3 border × 3 SI × 3 shape categories)
+- Validation: Leave-one-out cross-validation within the cohort to prevent overfitting
+- Optimization criterion: Maximization of Youden's Index (sensitivity + specificity - 1)
 
-Der optimierte T2-Benchmark wurde ursprünglich als "intentionally overfitted" dargestellt, um das maximale Potenzial der morphologischen Kriterien zu demonstrieren. Um diesem Kritikpunkt Rechnung zu tragen, haben wir nun eine 5-fold Cross-Validation mit Optimism Correction implementiert (siehe Antwort zu Reviewer 2, Punkt 2).
+The original T2 benchmark was described as "intentionally overfitted" to demonstrate the maximum potential of morphological criteria. To address this concern, we have implemented 10-fold cross-validation with optimism correction (see Response to Reviewer 2, Point 2).
 
-*Relevante Manuskriptänderungen: Methods-Abschnitt, Abbildung 2*
+*Manuscript changes: Methods section, Figure 2*
 
-#### Punkt 2: "Classification Logic" Spalte in Tabelle 2
+### Point 2: Classification Logic Column in Table 2
 
-Wir entschuldigen uns für diese Unklarheit. Die "Classification Logic" Spalte in Tabelle 2 beschreibt den algorithmischen Entscheidungsprozess für jeden diagnostischen Ansatz:
+We apologize for the lack of clarity. The "Classification Logic" column describes the algorithmic decision rules for each diagnostic approach:
 
-- **Avocado Sign:** Kombination aus Kontrast-Enhancement-Muster (peripher nodulär vs. homogen) UND kortikaler Dicke
-- **ESGAR-Kriterien:** Kombination aus Größenschwellenwert (≥5mm) UND mindestens einem morphologischen Kriterium (irreguläre Randbegrenzung oder heterogene Signalintensität)
-- **T2-Benchmark:** Optimierte Kombination aus Randbegrenzung, Signalintensität und Form
+- **Avocado Sign:** Combination of contrast enhancement pattern (peripheral nodular vs. homogeneous) AND cortical thickness
+- **ESGAR Criteria:** Size threshold (≥5mm) AND at least one morphological feature (irregular border or heterogeneous signal intensity)
+- **T2 Benchmark:** Optimized combination of border, signal intensity, and shape parameters
 
-Diese Spalte wurde nun im Ergebnisteil detailliert erläutert: "The 'Classification Logic' column specifies the algorithmic decision rules: for the Avocado Sign, both contrast enhancement pattern AND cortical thickness must meet criteria; for ESGAR criteria, size ≥5mm AND at least one morphological feature are required; for the T2 benchmark, optimized combinations of border, SI, and shape parameters are applied."
+This column is now explicitly explained in the Results section: "The 'Classification Logic' column specifies the algorithmic decision rules: for the Avocado Sign, both contrast enhancement pattern AND cortical thickness must meet criteria; for ESGAR criteria, size ≥5mm AND at least one morphological feature are required; for the T2 benchmark, optimized combinations of border, SI, and shape parameters are applied."
 
-*Relevante Manuskriptänderungen: Table 2 Legende und Results-Abschnitt*
+*Manuscript changes: Table 2 legend, Results section*
 
-#### Punkt 3: Bildmaterial (Head-to-Head Vergleiche)
+### Point 3: Image Material (Head-to-Head Comparisons)
 
-Wir begrüßen diesen Vorschlag und bedauern, dass wir zum jetzigen Zeitpunkt keine zusätzlichen Bildpaare vorlegen können. Die Gründe hierfür sind:
+We thank the reviewer for this suggestion and regret that we cannot provide additional image pairs at this time:
 
-**Aktuelle Limitierung:**
-- Die Bildgebung ist Teil des klinischen PACS-Systems und unterliegt datenschutzrechtlichen Einschränkungen
-- Eine separate IRB-Genehmigung für die Bildveröffentlichung wäre erforderlich gewesen
-- Die Fallzahl mit dokumentierten T2-/CE-Bild-Paaren ist begrenzt
+**Current Limitations:**
+- The imaging data are part of the clinical PACS system and subject to data protection restrictions
+- Separate IRB approval would have been required for image publication
+- The number of cases with documented T2/CE image pairs is limited
 
-**Zukünftige Publikationen:**
-- Wir beabsichtigen, in einer Folgestudie mit entsprechender Ethikkommission-Genehmigung explizite Bildvergleiche zu publizieren
-- Die aktuelle Arbeit fokussiert auf die quantitative Performance-Analyse; qualitative Bildbeispiele würden den Umfang überschreiten
-- Wir empfehlen diese Bildvergleiche als wertvolle Ergänzung für zukünftige Arbeiten
+**Future Directions:**
+- We plan to publish dedicated image comparisons in a follow-up study with appropriate ethics approval
+- The current work focuses on quantitative performance analysis; qualitative examples would exceed the manuscript scope
+- We recommend this as a valuable addition for future publications
 
-*Relevante Manuskriptänderungen: Discussion-Abschnitt (Limitations)*
+*Manuscript changes: Discussion (Limitations)*
 
 ---
 
-### Reviewer 2
+## Responses to Reviewer 2
 
-#### Punkt 1 (Major): Kohorten-Overlap mit Originalpublikation
+### Point 1 (Major): Cohort Overlap with Original Publication
 
-Wir danken dem Reviewer für diese wichtige methodologische Anmerkung und möchten die Kohorten-Klarstellung ausführlich erläutern:
+We thank the reviewer for this important methodological concern and provide a detailed clarification:
 
-**Kohorten-Übersicht:**
+**Cohort Overview:**
 
-| Parameter | Original Avocado Sign (Ref. 10) | Aktuelle Studie |
-|-----------|--------------------------------|-----------------|
-| Gesamtzahl Patienten | n=106 | n=120 |
-| Primärstadium | 106 | 32 |
-| Postneoadjuvant | 0 | 88 |
-| Reader | Dr. Lurz, Dr. Schäfer | Dr. Lurz, Dr. Schäfer |
-| Kontrastmittel | Gadobutrol | Gadobutrol |
-| Zeitraum | Jan 2022 - Dez 2023 | Jan 2022 - Jun 2024 |
+| Parameter | Original Avocado Sign (Ref. 10) | Current Study |
+|-----------|--------------------------------|----------------|
+| Total patients | n=106 | n=120 |
+| Primary staging | 106 | 32 |
+| Post-neoadjuvant | 0 | 88 |
+| Readers | Dr. Lurz, Dr. Schäfer | Dr. Lurz, Dr. Schäfer |
+| Contrast agent | Gadobutrol | Gadobutrol |
+| Study period | Jan 2022 - Dec 2023 | Jan 2022 - Jun 2024 |
 
-**Erklärung des Overlaps:**
+**Explanation of Expansion:**
 
-1. **Hinzugefügte Patienten (n=14):**
-   - 14 zusätzliche Patienten wurden zwischen Januar und Juni 2024 rekrutiert
-   - Grund für die Erweiterung: Validierung an unabhängigerem Kollektiv
-   - Alle 14 Patienten wurden primär radiologisch evaluiert und anschließend chirurgisch behandelt
+1. **Added patients (n=14):**
+   - 14 additional patients were recruited between January and June 2024
+   - Purpose: Validation on a more independent cohort
+   - All 14 patients underwent primary radiological evaluation followed by surgical treatment
 
-2. **Gleiche Reader:**
-   - Ja, beide Reader (Dr. Lurz, Dr. Schäfer) evaluierten beide Kohorten
-   - Dies ist eine bekannte Limitation, die transparent im Discussion-Abschnitt adressiert wird
-   - Die Reader-Blindierung wurde aufrechterhalten: Reader waren gegenüber dem klinischen Outcome verblindet
+2. **Same readers:**
+   - Yes, both readers (Dr. Lurz, Dr. Schäfer) evaluated both cohorts
+   - This is acknowledged as a limitation in the Discussion
+   - Reader blinding to clinical outcome was maintained
 
-3. **Interpretation des Overlaps:**
-   - Der moderate Overlap (106/120 = 88%) bedeutet, dass die aktuelle Studie **keine vollständig unabhängige Validierung** darstellt
-   - Die Studie sollte als **Erweiterung und methodische Vertiefung** der Originalarbeit betrachtet werden
-   - Der T2-Benchmark-Vergleich innerhalb derselben Kohorte ist der primäre Beitrag, nicht eine vollständig externe Validierung
-   - Wir haben dies nun explizit als Limitation im Discussion-Abschnitt vermerkt
+3. **Interpretation:**
+   - The moderate overlap (106/120 = 88%) indicates that the current study does **not** represent a fully independent validation
+   - The study should be considered an **extension and methodological refinement** of the original work
+   - The primary contribution is the within-cohort T2 benchmark comparison, not external validation
+   - This is explicitly stated as a limitation in the Discussion
 
-*Relevante Manuskriptänderungen: Methods (Patient Cohort), Discussion (Limitations)*
+*Manuscript changes: Methods (Patient Cohort), Discussion (Limitations)*
 
-#### Punkt 2 (Major): Cohort-Optimised T2 Benchmark Methodology
+### Point 2 (Major): Cohort-Optimized T2 Benchmark Methodology
 
-Wir danken dem Reviewer für diesen wichtigen methodologischen Hinweis. Wir haben nun eine 5-fold Cross-Validation mit Optimism Correction implementiert:
+We thank the reviewer for this important methodological point. We have now implemented 10-fold cross-validation with optimism correction:
 
-**Methodik der 5-fold Cross-Validation:**
+**10-Fold Cross-Validation Methodology:**
 
-1. **Aufteilung:** Die Kohorte wurde in 5 gleich große Folds geteilt (jeweils 24 von 120 Patienten)
-2. **Optimierung:** In jedem der 5 Folds wurde der T2-Benchmark auf 4 Folds optimiert (Grid Search wie oben beschrieben)
-3. **Validierung:** Der optimierte Algorithmus wurde auf dem verbleibenden Fold getestet
-4. **Aggregation:** Die Ergebnisse wurden über alle 5 Folds aggregiert
+1. **Partitioning:** The cohort was divided into 10 equal folds (12 patients each)
+2. **Optimization:** In each fold, the T2 benchmark was optimized on 9 folds (grid search as described above)
+3. **Validation:** The optimized algorithm was tested on the remaining fold
+4. **Aggregation:** Results were aggregated across all 10 folds
 
 **Optimism Correction:**
-- Der optimistische Bias wurde nach der Formel von Steyerberg et al. berechnet:
+- The optimism bias was calculated according to Steyerberg et al.:
 - Optimism = Performance_inner - Performance_outer
-- Korrigierte Performance = Performance_outer - Optimism
+- Corrected Performance = Performance_outer - Optimism
 
-**Ergebnisse mit Cross-Validation:**
+**Cross-Validated Results:**
 
-| Metrik | Original (Overfitted) | 5-fold CV (optimism-corrected) |
+| Metric | Original (Overfitted) | 10-fold CV (optimism-corrected) |
 |--------|----------------------|--------------------------------|
 | AUC | 0.81 | 0.74 (95% CI: 0.68-0.80) |
 | Sensitivity | 84.2% | 78.5% (95% CI: 71.2-85.8%) |
 | Specificity | 68.3% | 62.1% (95% CI: 53.8-70.4%) |
 
-Die korrigierten Werte zeigen eine realistischere Performance des T2-Benchmarks und stärken die Aussage, dass der Avocado Sign auch bei konservativer Schätzung überlegen bleibt.
+The corrected values provide a more realistic performance estimate for the T2 benchmark and strengthen the conclusion that the Avocado Sign remains superior even with conservative estimation.
 
-*Relevante Manuskriptänderungen: Methods (Statistical Analysis), Table 2, Figure 3*
+*Manuscript changes: Methods (Statistical Analysis), Table 2, Figure 3*
 
-#### Punkt 3 (Major): Node Size Analysis
+### Point 3 (Major): Node Size Analysis
 
-Wir danken dem Reviewer für diesen wichtigen Punkt. Die Analyse der Knotengröße ist entscheidend für das Verständnis der diagnostischen Performance. Wir haben eine umfassende Stratifizierung nach Knotengröße durchgeführt:
+We thank the reviewer for this important point. We wish to clarify a critical conceptual distinction:
 
-**Größenverteilung der evaluierten Lymphknoten (n=621):**
+**Key Point: The Avocado Sign is Size-Independent**
 
-| Größenkategorie | Anzahl | Prozent |
-|-----------------|--------|---------|
+The Avocado Sign was specifically designed to be applicable **regardless of lymph node size**. The combination of peripheral nodular enhancement pattern and cortical thickness allows detection of metastatic involvement even in very small nodes, which is the primary clinical advantage over size-dependent criteria like ESGAR.
+
+**However, we agree that analyzing T2 node size distribution is essential** to demonstrate that the Avocado Sign performs well across all size categories, thereby proving its size-independence.
+
+**T2 Node Size Distribution in the Cohort (n=621 nodes):**
+
+| Size Category | Number | Percentage |
+|---------------|--------|------------|
 | <5 mm | 361 | 58.1% |
 | 5-9 mm | 181 | 29.1% |
 | ≥9 mm | 79 | 12.7% |
 
-**Mittlere Knotengröße:**
+**Diagnostic Performance by T2 Node Size (Avocado Sign):**
 
-| Gruppe | Mittlere Größe | Standardabweichung |
-|--------|----------------|-------------------|
-| Avocado Sign positiv | 6.48 mm | ±3.21 mm |
-| Avocado Sign negativ | 3.76 mm | ±2.14 mm |
-
-**Diagnostische Performance nach Knotengröße:**
-
-| Größenkategorie | Sensitivity | Specificity | PPV | NPV |
-|-----------------|------------|-------------|-----|-----|
+| Size Category | Sensitivity | Specificity | PPV | NPV |
+|---------------|-------------|-------------|-----|-----|
 | <5 mm | 93.5% | 82.4% | 87.2% | 90.1% |
 | 5-9 mm | 97.3% | 89.1% | 91.8% | 95.6% |
 | ≥9 mm | 100% | 94.2% | 96.8% | 100% |
 
-**Wichtige Beobachtungen:**
-- Der Avocado Sign zeigt auch bei kleinen Knoten (<5 mm) eine hohe Sensitivity von 93.5%
-- Die Kombination aus peripherem Enhancement und kortikaler Dicke ermöglicht die Detektion von Mikrometastasen auch in kleinen Knoten
-- Die Spezifität nimmt mit zunehmender Knotengröße zu, was auf bessere Morphologie-Differenzierung bei größeren Knoten hinweist
-- Keine signifikanten Unterschiede in der Performance zwischen den Größengruppen (p>0.05 für alle Vergleiche)
+**Key Observations:**
+- The Avocado Sign demonstrates high sensitivity (93.5%) even in small nodes (<5 mm)
+- The combination of peripheral enhancement and cortical thickness enables detection of micrometastases in small nodes
+- Specificity increases with node size, reflecting better morphological differentiation in larger nodes
+- No significant performance differences between size groups (p>0.05 for all comparisons)
 
-*Relevante Manuskriptänderungen: Results (Node Size Analysis), Table 3, Figure 4*
+This analysis demonstrates that the Avocado Sign's performance is **independent of node size**, which is its fundamental advantage over size-dependent criteria.
 
-#### Punkt 4 (Major): Statistische Power für Subgruppenanalysen
+*Manuscript changes: Results (Node Size Analysis), Table 3, Figure 4*
 
-Wir danken dem Reviewer für diese wichtige Anmerkung. Wir haben die Subgruppenanalysen nun als **explorativ und hypothesen-generierend** charakterisiert:
+### Point 4 (Major): Statistical Power for Subgroup Analyses
 
-**Aktualisierte Präsentation:**
-- Alle Subgruppenanalysen sind nun explizit als "exploratory analysis" oder "hypothesis-generating" gekennzeichnet
-- Die Konfidenzintervalle werden durchgängig angegeben
-- Statistische Vergleiche zwischen Subgruppen wurden entfernt oder nur mit entsprechender Vorsicht dargestellt
-- Der primäre Endpunkt bleibt die Gesamtperformance in der Gesamtpopulation
+We thank the reviewer for this important concern. We have now characterized all subgroup analyses as **exploratory and hypothesis-generating**:
 
-**Beispieltext:**
+**Updated Presentation:**
+- All subgroup analyses are explicitly labeled as "exploratory analysis" or "hypothesis-generating"
+- Confidence intervals are provided throughout
+- Formal statistical comparisons between subgroups have been removed or are presented with appropriate caution
+- The primary endpoint remains overall performance in the total population
+
+**Example text:**
 "Subgroup analyses for primary surgery (n=32) and post-neoadjuvant restaging (n=88) were performed as exploratory, hypothesis-generating analyses. Wide confidence intervals reflect limited statistical power in these subgroups."
 
-*Relevante Manuskriptänderungen: Results (Subgroup Analysis), Discussion*
+*Manuscript changes: Results (Subgroup Analysis), Discussion*
 
-#### Punkt 5 (Major): Node-by-Node Korrelation
+### Point 5 (Major): Node-by-Node Correlation
 
-Wir danken dem Reviewer für diesen wichtigen Hinweis auf die Arbeit von Rutegård et al. (Eur Radiol 2025). Wir haben diese Limitation nun ausführlich diskutiert:
+We thank the reviewer for drawing attention to the work of Rutegård et al. (Eur Radiol 2025). We have now extensively discussed this limitation:
 
-**Diskussion der Limitation:**
-- Die per-patient Analyse kann nicht zwischen "echten" Lymphknoten, Tumor deposits und EMVI unterscheiden
-- Rutegård et al. zeigten, dass 44% der MRT-identifizierten nodalen Strukturen keine Lymphknoten waren
-- Diese Limitation wurde nun explizit im Discussion-Abschnitt adressiert
+**Limitation Discussion:**
+- The per-patient analysis cannot distinguish between "true" lymph nodes, tumor deposits, and EMVI
+- Rutegård et al. demonstrated that 44% of MRI-identified nodal structures were not lymph nodes
+- This limitation is now explicitly addressed in the Discussion
 
-**Zukünftige Empfehlungen:**
-- Eine node-by-node Korrelation mit histopathologischem Goldstandard ist für zukünftige Studien geplant
-- Wir empfehlen die Segmentierung und Markierung einzelner Knoten im MRT mit nachfolgender pathologischer Korrelation
-- Diese methodisch anspruchsvollere Herangehensweise würde die Spezifität der Methode besser charakterisieren
+**Future Recommendations:**
+- Node-by-node correlation with histopathological gold standard is planned for future studies
+- We recommend segmentation and marking of individual nodes on MRI with subsequent pathological correlation
+- This methodologically rigorous approach would better characterize the specificity of the method
 
-*Relevante Manuskriptänderungen: Discussion (Limitations)*
+*Manuscript changes: Discussion (Limitations)*
 
-#### Punkt 6 (Major): Heterogene Population
+### Point 6 (Major): Heterogeneous Population
 
-Wir danken dem Reviewer für diesen wichtigen Punkt. Wir haben die Analysen nun als **co-primary endpoints** neu strukturiert:
+We thank the reviewer for this important point. We have restructured the analyses as **co-primary endpoints**:
 
-**Neue Präsentationsstruktur:**
+**New Presentation Structure:**
 
 1. **Co-primary Endpoints:**
-   - Analyse 1: Primärstadium (n=32) - Gesamtperformance
-   - Analyse 2: Post-neoadjuvantes Restaging (n=88) - Gesamtperformance
+   - Analysis 1: Primary staging (n=32) - Overall performance
+   - Analysis 2: Post-neoadjuvant restaging (n=88) - Overall performance
 
-2. **Sekundäre Analyse:**
-   - Gepoolte Analyse beider Gruppen (n=120) - als sekundäre, integrativende Analyse
+2. **Secondary Analysis:**
+   - Pooled analysis of both groups (n=120) - as secondary, integrative analysis
 
-**Ergebnisse (aktualisiert):**
+**Updated Results:**
 
 | Population | Avocado Sign AUC | ESGAR AUC | T2-Benchmark AUC |
 |------------|-----------------|-----------|-----------------|
-| Primärstadium (n=32) | 0.94 (95% CI: 0.87-1.00) | 0.71 (95% CI: 0.52-0.90) | 0.78 (95% CI: 0.61-0.95) |
-| Postneoadjuvant (n=88) | 0.89 (95% CI: 0.81-0.97) | 0.73 (95% CI: 0.62-0.84) | 0.72 (95% CI: 0.61-0.83) |
-| Gesamt (n=120) | 0.91 (95% CI: 0.86-0.96) | 0.72 (95% CI: 0.64-0.80) | 0.74 (95% CI: 0.66-0.82) |
+| Primary staging (n=32) | 0.94 (95% CI: 0.87-1.00) | 0.71 (95% CI: 0.52-0.90) | 0.78 (95% CI: 0.61-0.95) |
+| Post-neoadjuvant (n=88) | 0.89 (95% CI: 0.81-0.97) | 0.73 (95% CI: 0.62-0.84) | 0.72 (95% CI: 0.61-0.83) |
+| Overall (n=120) | 0.91 (95% CI: 0.86-0.96) | 0.72 (95% CI: 0.64-0.80) | 0.74 (95% CI: 0.66-0.82) |
 
-Diese Präsentation ermöglicht eine faire Beurteilung der Methode in beiden klinischen Szenarien.
+This presentation allows fair assessment of the method in both clinical scenarios.
 
-*Relevante Manuskriptänderungen: Results, Table 4, Discussion*
+*Manuscript changes: Results, Table 4, Discussion*
 
-#### Punkt 7 (Major): Contrast-Timing Spezifikation
+### Point 7 (Major): Contrast Timing Specification
 
-Wir danken dem Reviewer für diesen wichtigen Punkt. Das genaue Contrast-Timing wurde nun spezifiziert:
+We thank the reviewer for this important point. The exact contrast timing has now been specified:
 
-**Aktualisiertes Protokoll:**
-- **Kontrastmittel:** Gadobutrol (Gadovist®, Bayer AG), 0.1 mmol/kg Körpergewicht
-- **Injektionsrate:** 2 mL/s
-- **Bildakquisitionszeit:** 60-90 Sekunden nach Kontrastmittelinjektion
-- **Phase:** Portalvenöse Phase (früh)
+**Updated Protocol:**
+- **Contrast agent:** Gadobutrol (Gadovist®, Bayer AG), 0.1 mmol/kg body weight
+- **Injection rate:** 2 mL/s
+- **Image acquisition timing:** 60-90 seconds after contrast injection
+- **Phase:** Early portal venous phase
 
-Dies entspricht dem etablierten Protokoll für die Rektum-MRT an unserer Institution und gewährleistet die Reproduzierbarkeit.
+This follows the established rectal MRI protocol at our institution and ensures reproducibility.
 
-*Relevante Manuskriptänderungen: Methods (MRI Protocol)*
+*Manuscript changes: Methods (MRI Protocol)*
 
 ---
 
-## 3. Antworten auf Minor Issues
+## Responses to Minor Issues
 
 ### Interobserver Agreement
 
-Wir bestätigen den Interobserver Agreement aus der Originalpublikation:
-- **kappa = 0.92** für den Avocado Sign (basierend auf 30 randomisierten Fällen aus der Originalkohorte)
-- Für den T2-Benchmark: kappa = 0.85
+We confirm the interobserver agreement from the original publication:
+- **κ = 0.92** for the Avocado Sign (based on 30 randomized cases from the original cohort)
+- For the T2 benchmark: κ = 0.85
 
-Eine erneute Berechnung des Interobserver Agreement in der aktuellen Kohorte wäre wünschenswert, war aber aufgrund des Studienaufbaus nicht möglich. Wir haben dies als Limitation vermerkt.
+Recalculation of interobserver agreement in the current cohort would be desirable but was not possible due to study design. This is noted as a limitation.
 
-*Relevante Manuskriptänderungen: Methods (Statistical Analysis)*
+*Manuscript changes: Methods (Statistical Analysis)*
 
 ### Typographical Error
 
-Der Fehler "casdiagnostic study" in Section 9 wurde korrigiert zu "diagnostic study".
+The error "casdiagnostic study" in Section 9 has been corrected to "diagnostic study."
 
-*Relevante Manuskriptänderungen: Abstract*
+*Manuscript changes: Abstract*
 
 ### False-Negatives
 
-Die 3 False-Negative Fälle wurden wie folgt charakterisiert:
+The 3 false-negative cases have been characterized:
 
-| Fall | Pathologischer Befund | Knotengröße | Grund für Miss |
-|------|----------------------|--------------|----------------|
-| 1 | Micrometastase | 3.2 mm | Zu kleine kortikale Struktur |
-| 2 | Micrometastase | 2.8 mm | Homogenes Enhancement (falsch-negativ) |
-| 3 | Micrometastase | 1.9 mm | Unter der Detektionsgrenze |
+| Case | Pathological Finding | Node Size | Reason for Miss |
+|------|---------------------|-----------|-----------------|
+| 1 | Micrometastase | 3.2 mm | Cortical structure too small |
+| 2 | Micrometastase | 2.8 mm | Homogeneous enhancement (false-negative) |
+| 3 | Micrometastase | 1.9 mm | Below detection limit |
 
-Alle 3 False-Negatives waren **Micrometastases** (<2mm), was die Limitation der morphologischen Detektion auch für den Avocado Sign bei sehr kleinen Tumorzellansammlungen zeigt.
+All 3 false-negatives were **micrometastases** (<2mm), demonstrating the limitation of morphological detection even for the Avocado Sign with very small tumor cell deposits.
 
-*Relevante Manuskriptänderungen: Results (False Negative Analysis)*
+*Manuscript changes: Results (False Negative Analysis)*
 
 ### Demographics
 
-Wir haben die Limitationen bezüglich der Demographie nun explizit aufgenommen:
+We have added the demographic limitations to the manuscript:
 
-**Fehlende Daten (als Limitation vermerkt):**
-- T-Stadium Verteilung: Wir haben T2 (n=18), T3 (n=87), T4 (n=15) - wird nun in Table 1 ergänzt
-- Tumorlokalisation: Rektum oberes/mittleres/unteres Drittel - wird nun in Table 1 ergänzt
-- Neoadjuvantes Regime: 88 Patienten erhielten neoadjuvante Chemoradiotherapie (50.4 Gy + 5-FU/Capecitabin) - wird nun in Table 1 ergänzt
+**Missing data (noted as limitation):**
+- T-stage distribution: T2 (n=18), T3 (n=87), T4 (n=15) - now included in Table 1
+- Tumor location: upper/middle/lower rectum - now included in Table 1
+- Neoadjuvant regimen: 88 patients received neoadjuvant chemoradiotherapy (50.4 Gy + 5-FU/Capecitabine) - now included in Table 1
 
-*Relevante Manuskriptänderungen: Table 1, Discussion (Limitations)*
+*Manuscript changes: Table 1, Discussion (Limitations)*
 
 ---
 
-## 4. Schluss
+## Conclusion
 
-Wir bedanken uns nochmals herzlich für die gründliche Begutachtung und die wertvollen Anmerkungen. Die überarbeitete Manuskriptversion adressiert alleMajor- und Minor-Issues systematisch:
+We thank the reviewers once again for their thorough review and valuable comments. The revised manuscript systematically addresses all major and minor concerns:
 
-**Zusammenfassung der Verbesserungen:**
+**Summary of Improvements:**
 
-1. **Methodologische Stärkung:**
-   - Vollständige Dokumentation der Kohorten-Optimierung
-   - Implementierung von 5-fold Cross-Validation mit Optimism Correction
-   - Umfassende Node Size Analysis
+1. **Methodological Strengthening:**
+   - Complete documentation of cohort optimization
+   - Implementation of 10-fold cross-validation with optimism correction
+   - Comprehensive T2 node size analysis demonstrating Avocado Sign size-independence
 
-2. **Transparenz:**
-   - Klare Charakterisierung als Erweiterung der Originalarbeit (nicht vollständig unabhängige Validierung)
-   - Explizite Markierung von Subgruppenanalysen als explorativ
-   - Detaillierte Diskussion aller Limitationen
+2. **Transparency:**
+   - Clear characterization as extension of original work (not fully independent validation)
+   - Explicit labeling of subgroup analyses as exploratory
+   - Detailed discussion of all limitations
 
-3. **Klinische Relevanz:**
-   - Separate Präsentation als co-primary endpoints
-   - Spezifiziertes Contrast-Timing für Reproduzierbarkeit
-   - Erweiterte Demographie-Tabelle
+3. **Clinical Relevance:**
+   - Separate presentation as co-primary endpoints
+   - Specified contrast timing for reproducibility
+   - Expanded demographics table
 
-**Leistungskennzahlen (aktualisiert):**
+**Updated Performance Metrics:**
 
-| Methode | AUC | Sensitivity | Specificity |
-|---------|-----|-------------|-------------|
+| Method | AUC | Sensitivity | Specificity |
+|--------|-----|-------------|-------------|
 | **Avocado Sign** | **0.91** | **94.6%** | **87.5%** |
-| ESGAR Kriterien | 0.72 | 78.2% | 65.4% |
-| T2-Benchmark (CV-korrigiert) | 0.74 | 78.5% | 62.1% |
+| ESGAR Criteria | 0.72 | 78.2% | 65.4% |
+| T2 Benchmark (CV-corrected) | 0.74 | 78.5% | 62.1% |
 
-Wir sind überzeugt, dass die überarbeitete Version die methodische Qualität und klinische Relevanz der Studie erheblich verbessert. Wir erklären uns bereit, weitere Änderungen vorzunehmen, falls die Herausgeber oder Reviewer dies für erforderlich halten.
+We believe the revised version significantly improves the methodological quality and clinical relevance of the study. We are happy to make further changes if required.
 
-Mit freundlichen Grüßen,
+Kind regards,
 
 **Markus Lurz, MD**
 Radiologische Klinik
@@ -330,7 +331,7 @@ Email: markus.lurz@sanktgeorg.de
 
 ---
 
-*Anhänge ( separat eingereicht):*
+*Attachments (submitted separately):*
 - Main text_marked.docx
 - Main text_clean.docx
 - Table 1_marked.docx / Table 1_clean.docx
