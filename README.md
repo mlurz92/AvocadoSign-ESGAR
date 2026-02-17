@@ -2,7 +2,7 @@
 
 ## Anwendung zur Analyse und zum Vergleich des Avocado Sign mit T2-gewichteten MRI-Kriterien für das mesorektale Lymphknoten-Staging bei Rektumkarzinom
 
-![Version](https://img.shields.io/badge/version-5.4.0-blue)
+![Version](https://img.shields.io/badge/version-5.5.0-blue)
 ![Architektur](https://img.shields.io/badge/Architektur-Client--Side--SPA-orange)
 ![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green)
 ![Status](https://img.shields.io/badge/Status-Produktionsreif-success)
@@ -155,6 +155,30 @@ Der Results Tab gliedert sich in 7 Hauptsektionen:
 2. "Export as Markdown" Button klicken
 3. Die .md Datei wird automatisch heruntergeladen
 4. Die Datei kann direkt in wissenschaftliche Manuskripte integriert werden
+
+### 2.9 Reset-Funktion
+
+Die Reset-Funktion ermöglicht ein vollständiges Zurücksetzen aller Berechnungen und Einstellungen:
+
+- **Vollständiger Reset:** Alle Benutzereingaben, ausgewählten Kriterien und berechneten Ergebnisse werden auf die Standardwerte zurückgesetzt
+- **Schneller Zugriff:** Der Reset-Button ist prominent im Header platziert
+- **Sicherheitsabfrage:** Ein Bestätigungsdialog verhindert versehentliches Zurücksetzen
+- **Anwendungsbereich:** Zurückgesetzt werden:
+  - Kohorten-optimierte T2-Kriterien (Schwellenwerte, Morphologie-Einstellungen)
+  - Alle Statistik-Berechnungen
+  - Vergleichsanalysen
+  - Brute-Force-Ergebnisse
+
+### 2.10 Header-Bedienelemente
+
+Im Header der Anwendung stehen folgende Bedienelemente zur Verfügung:
+
+| Button | Funktion |
+|--------|----------|
+| **Show Quick Guide** | Öffnet einen Schnellstart-Dialog mit den wichtigsten Bedienhinweisen |
+| **Reset** | Setzt alle Berechnungen und Einstellungen auf die Standardwerte zurück |
+
+Die Bedienelemente sind so positioniert, dass sie jederzeit schnell erreichbar sind, ohne die aktuelle Analyse zu unterbrechen.
 
 ---
 

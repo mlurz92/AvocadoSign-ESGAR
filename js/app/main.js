@@ -611,6 +611,81 @@ class App {
         window.markdownExportService.exportMarkdown(this.allCohortStats);
     }
 
+    /**
+     * Setzt die Anwendung auf den Stand eines frischen Erststarts zurück.
+     * @returns {boolean} true wenn erfolgreich
+     */
+    resetApplication() {
+        try {
+            // 1. Alle Caches leeren
+            this.invalidateStatsCache();
+            if (window.statisticsService && typeof window.statisticsService.clearCache === 'function') {
+                window.statisticsService.clearCache();
+            }
+            
+            // 2. Brute-Force Ergebnisse löschen
+            if (window.bruteForceManager && typeof window.bruteForceManager.clearAllResults === 'function') {
+                window.bruteForceManager.clearAllResults();
+            }
+            // Auch im localStorage löschen
+            localStorage.removeItem(window.APP_CONFIG.STORAGE_KEYS.BRUTE_FORCE_RESULTS);
+            
+            // 3. T2-Kriterien auf Standard zurücksetzen
+            if (window.t2CriteriaManager) {
+                window.t2CriteriaManager.init(); // Initialisiert mit Standardwerten
+                window.t2CriteriaManager.applyCriteria(); // Wendet Standardkriterien an
+            }
+            
+            // 4. State zurücksetzen
+            if (window.state) {
+                window.state.reset();
+            }
+            
+            // 5. Interne Caches zurücksetzen
+            this._statsDirty = true;
+            this._statsCache = null;
+            this._lastCriteriaJson = null;
+            this._lastLogic = null;
+            this._lastBruteForceResultsJson = null;
+            this.allCohortStats = null;
+            
+            // 6. First-Start-Flag zurücksetzen, damit der Auto-BF-Dialog erscheint
+            localStorage.removeItem(window.APP_CONFIG.STORAGE_KEYS.FIRST_APP_START);
+            
+            // 7. Anwendung neu initialisieren
+            window.state.init();
+            window.t2CriteriaManager.init();
+            
+            // 8. Statistiken neu berechnen
+            this.recalculateAllStats();
+            
+            // 9. UI aktualisieren
+            this.refreshCurrentTab();
+            window.uiManager.updateT2CriteriaControlsUI(
+                window.t2CriteriaManager.getCurrentCriteria(), 
+                window.t2CriteriaManager.getCurrentLogic()
+            );
+            window.uiManager.markCriteriaSavedIndicator(false);
+            
+            // 10. Erfolgsmeldung anzeigen
+            window.uiManager.showToast('Anwendung erfolgreich zurückgesetzt.', 'success', 3000);
+            
+            // 11. Auto-BF-Dialog anzeigen (wie beim ersten Start)
+            const isFirstStart = loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.FIRST_APP_START) !== false;
+            const hasBfResults = loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.BRUTE_FORCE_RESULTS) !== null;
+            if (isFirstStart && !hasBfResults) {
+                window.uiManager.showAutoBfPrompt();
+                saveToLocalStorage(window.APP_CONFIG.STORAGE_KEYS.FIRST_APP_START, false);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Error during application reset:', error);
+            window.uiManager.showToast('Fehler beim Zurücksetzen der Anwendung.', 'danger', 5000);
+            return false;
+        }
+    }
+
     getRawData() { return this.rawData; }
     getProcessedData() { return this.processedData; }
 }

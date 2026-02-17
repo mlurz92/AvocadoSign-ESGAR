@@ -72,6 +72,7 @@ window.eventManager = (() => {
         }
         const singleClickActions = {
             'btn-quick-guide': () => window.uiManager.showQuickGuide(),
+            'btn-reset-app': () => handleApplicationReset(),
             'data-toggle-details': () => window.uiManager.toggleAllDetails('data-table-body', button.id),
             'analysis-toggle-details': () => window.uiManager.toggleAllDetails('analysis-table-body', button.id),
             'btn-reset-criteria': () => {
@@ -241,6 +242,20 @@ window.eventManager = (() => {
     function handleNodeCountLitSetChange(studyId) {
         if (window.state.setInsightsLiteratureSetId(studyId)) {
             if (window.insightsTab) window.insightsTab.renderNodeCountAnalysis(app.allCohortStats);
+        }
+    }
+
+    function handleApplicationReset() {
+        const resetConfig = window.APP_CONFIG.UI_TEXTS?.RESET || {
+            TITLE: 'Anwendung zurücksetzen',
+            MESSAGE: 'Möchten Sie die Anwendung wirklich auf den Ausgangszustand zurücksetzen? Alle Berechnungen und Einstellungen werden gelöscht.',
+            CONFIRM: 'Zurücksetzen',
+            CANCEL: 'Abbrechen'
+        };
+        
+        // Bestätigungsdialog anzeigen
+        if (confirm(`${resetConfig.TITLE}\n\n${resetConfig.MESSAGE}`)) {
+            app.resetApplication();
         }
     }
 

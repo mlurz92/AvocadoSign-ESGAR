@@ -166,6 +166,14 @@ window.APP_CONFIG = Object.freeze({
             title: "Analysis Context Active",
             text: "Comparing against <strong>[CRITERIA_NAME]</strong>. Analysis is locked to the <strong>[COHORT_NAME]</strong> cohort (N=[COUNT]) to ensure a methodologically valid comparison."
         },
+        RESET: Object.freeze({
+            TITLE: 'Anwendung zurücksetzen',
+            MESSAGE: 'Möchten Sie die Anwendung wirklich auf den Ausgangszustand zurücksetzen?\n\nAlle Berechnungen und Einstellungen werden gelöscht.',
+            CONFIRM: 'Zurücksetzen',
+            CANCEL: 'Abbrechen',
+            SUCCESS: 'Anwendung erfolgreich zurückgesetzt.',
+            ERROR: 'Fehler beim Zurücksetzen der Anwendung.'
+        }),
         t2LogicDisplayNames: {
             'AND': 'AND',
             'OR': 'OR',

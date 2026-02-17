@@ -180,6 +180,11 @@ window.bruteForceManager = (() => {
         currentCohortRunning = null;
     }
 
+    function clearAllResults() {
+        allCohortResults = {};
+        _saveResultsToStorage();
+    }
+
     return Object.freeze({
         init,
         startAnalysis,
@@ -189,6 +194,7 @@ window.bruteForceManager = (() => {
         getAllResults,
         isRunning: () => isRunning,
         isWorkerAvailable,
-        terminateWorker
+        terminateWorker,
+        clearAllResults
     });
 })();

@@ -243,6 +243,43 @@ window.state = (() => {
     function getInsightsLiteratureSetId() { return currentState.insightsLiteratureSetId; }
     function setInsightsLiteratureSetId(newStudyId) { return _setter('insightsLiteratureSetId', window.APP_CONFIG.STORAGE_KEYS.INSIGHTS_LITERATURE_SET_ID, newStudyId); }
 
+    /**
+     * Setzt alle State-Variablen auf die Standardwerte zurück und leert localStorage
+     * @returns {boolean} true wenn erfolgreich
+     */
+    function reset() {
+        // Alle localStorage-Einträge für die App löschen
+        Object.values(window.APP_CONFIG.STORAGE_KEYS).forEach(key => {
+            localStorage.removeItem(key);
+        });
+        
+        // State auf Standardwerte zurücksetzen
+        currentState = {
+            currentCohort: defaultState.currentCohort,
+            dataTableSort: { ...defaultState.dataTableSort },
+            analysisTableSort: { ...defaultState.analysisTableSort },
+            publicationSection: defaultState.publicationSection,
+            publicationBruteForceMetric: defaultState.publicationBruteForceMetric,
+            publicationLang: defaultState.publicationLang,
+            statsLayout: defaultState.statsLayout,
+            statsCohort1: defaultState.statsCohort1,
+            statsCohort2: defaultState.statsCohort2,
+            comparisonView: defaultState.comparisonView,
+            comparisonStudyId: defaultState.comparisonStudyId,
+            insightsView: defaultState.insightsView,
+            insightsPowerStudyId: defaultState.insightsPowerStudyId,
+            insightsLiteratureSetId: defaultState.insightsLiteratureSetId,
+            activeTabId: defaultState.activeTabId,
+            publicationEditMode: defaultState.publicationEditMode,
+            editedManuscriptHTML: defaultState.editedManuscriptHTML
+        };
+        
+        // Analysis Context zurücksetzen
+        analysisContext = null;
+        
+        return true;
+    }
+
     return Object.freeze({
         init,
         getCurrentCohort,
@@ -283,6 +320,7 @@ window.state = (() => {
         getInsightsPowerStudyId,
         setInsightsPowerStudyId,
         getInsightsLiteratureSetId,
-        setInsightsLiteratureSetId
+        setInsightsLiteratureSetId,
+        reset
     });
 })();
