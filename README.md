@@ -1,480 +1,630 @@
 # AvocadoSign-ESGAR
 
-## Anwendung zur Analyse und zum Vergleich des Avocado Sign mit T2-gewichteten MRI-Kriterien für das mesorektale Lymphknoten-Staging bei Rektumkarzinom
-
-![Version](https://img.shields.io/badge/version-5.5.0-blue)
-![Architektur](https://img.shields.io/badge/Architektur-Client--Side--SPA-orange)
-![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green)
-![Status](https://img.shields.io/badge/Status-Produktionsreif-success)
+## Interaktive Webanwendung zur Evaluation des Avocado Sign im Vergleich zu T2-gewichteten MRI-Kriterien für das Lymphknoten-Staging beim Rektumkarzinom
 
 ---
 
-## 1. Zusammenfassung und wissenschaftlicher Zweck
+## Inhaltsverzeichnis
 
-Die **AvocadoSign-ESGAR** Anwendung ist ein spezialisiertes, leistungsstarkes Forschungstool zur rigorosen statistischen Auswertung des MRI-basierten Lymphknoten-Staging beim Rektumkarzinom. Der Hauptzweck besteht darin, die diagnostische Genauigkeit des **„Avocado Sign"** (eines neuartigen morphologischen Markers) mit den Standard- und experimentellen **T2-gewichteten MRI-Kriterien** zu vergleichen.
-
-Das Avocado Sign ist ein vielversprechender morphologischer Marker, der in T2-gewichteten MRT-Aufnahmen des Rektums identifiziert werden kann. Diese Anwendung ermöglicht Ärzten und Forschern, die diagnostische Leistung des Avocado Sign systematisch zu evaluieren und mit etablierten Kriterien wie den ESGAR-Richtlinien zu vergleichen.
-
-Im Gegensatz zu statischer Statistik-Software bietet dieses Tool eine **Reaktive Analyse-Engine**, die es Forschern ermöglicht:
-
-1. **Malignität dynamisch neu definieren:** Sofort beobachten, wie das Ändern von T2-Kriterien-Schwellenwerten (z.B. Größenschwellenwert, Border-Unregelmäßigkeit) die diagnostische Leistung beeinflusst.
-2. **Algorithmisch optimieren:** Brute-Force-Permutations-Tests verwenden, um mathematisch optimale Kriteriensätze zu entdecken.
-3. **Methodik vergleichen:** Kopf-an-Kopf-Statistikvergleiche (McNemar, ROC) zwischen dem Avocado Sign und Literatur-Benchmarks durchführen.
-
----
-
-## 2. Funktionsübersicht
-
-### 2.1 Dashboard mit Patientenstatistiken
-
-Das Dashboard bietet einen umfassenden Überblick über die Patientenkohorte:
-
-- **Demografische Übersicht:** Altersverteilung (Histogramm mit KDE-Approximation), Geschlechterverteilung (Kreisdiagramm)
-- **Tumorcharakteristika:** T-Stadium-Verteilung, Abstand vom Anus
-- **Lymphknoten-Statistiken:** Gesamtanzahl der Lymphknoten, Verteilung nach Größenkategorien
-
-### 2.2 Avocado Sign Bewertung
-
-Das Avocado Sign ist ein binärer Marker (positiv/negativ), der für jeden Lymphknoten und jeden Patienten ausgewertet wird:
-
-- **Positiv:** Der Lymphknoten zeigt das Avocado Sign
-- **Negativ:** Der Lymphknoten zeigt kein Avocado Sign
-
-Die Anwendung berechnet automatisch den Patient-Level-Status basierend auf dem „worst-case"-Prinzip: Wenn **irgendein** Lymphknoten eines Patienten positiv ist, wird der gesamte Patient als Avocado Sign positiv klassifiziert.
-
-### 2.3 T2-gewichtete Kriterien
-
-Die Anwendung unterstützt drei Arten von T2-Kriterien:
-
-#### ESGAR-Kriterien
-Die offiziellen Richtlinien der European Society of Gastrointestinal and Abdominal Radiology:
-- Kurzachsendurchmesser ≥ 9mm ODER
-- Kurzachsendurchmesser 5-9mm MIT mindestens einem Zusatzkriterium (irreguläre Border, heterogenes Signal)
-
-#### Literatur-basierte Kriterien
-Voreingestellte Definitionen aus der wissenschaftlichen Literatur:
-- **Mercury Study-Kriterien**
-- **Brown et al.** Kriterien
-
-#### Kohorten-optimierte Kriterien
-Vom Benutzer definierbare Schwellenwerte und Morphologie-Kriterien:
-- **Größenschwellenwert:** Einstellbar in 0,5mm-Schritten
-- **Morphologische Features:** Form (rund/irregulär), Border (glatt/irregulär/spikuliert), Signal (homogen/heterogen)
-- **Logik:** AND- oder OR-Verknüpfung der Kriterien
-
-### 2.4 Statistik-Service mit allen diagnostischen Metriken
-
-Der umfassende Statistik-Service berechnet:
-
-- **Confusion Matrix:** TP, TN, FP, FN
-- **Sensitivität (Sensitivität)**
-- **Spezifität**
-- **Positiver Prädiktiver Wert (PPV)**
-- **Negativer Prädiktiver Wert (NPV)**
-- **Genauigkeit (Accuracy)**
-- **Positive/Negative Likelihood Ratios (LR+, LR-)**
-- **Youden-Index**
-- **F1-Score**
-- **Odds Ratios (OR)** für einzelne T2-Features
-- **AUC (Area Under the Curve)** aus der ROC-Analyse
-- **95% Konfidenzintervalle** mittels Wilson-Score-Intervall-Methode
-
-### 2.5 Node Size Analysis (Patient-Level nach Größenkategorien)
-
-Die Node Size Analysis ist eine spezielle Funktion zur Analyse der diagnostischen Leistung nach Lymphknoten-Größenkategorien:
-
-#### Größenkategorien
-- **Klein:** < 5mm Kurzachsendurchmesser
-- **Mittel:** 5-9mm Kurzachsendurchmesser
-- **Groß:** ≥ 9mm Kurzachsendurchmesser
-
-#### Patient-Level-Prinzip
-Die Node Size Analysis arbeitet auf Patient-Level, nicht auf Knoten-Level:
-- Jeder Patient wird einer Größenkategorie zugeordnet basierend auf seinem größten malignitätsverdächtigen Lymphknoten
-- Die diagnostischen Metriken werden für jede Größenkategorie separat berechnet
-- Dies ermöglicht eine differenzierte Analyse der Leistung des Avocado Sign in verschiedenen Tumor-Subgruppen
-
-#### Proxy-AS-Status
-Der Proxy-AS-Status wird verwendet, wenn der direkte Avocado Sign Status nicht verfügbar ist:
-- Basierend auf der Kombination von Größe und morphologischen Kriterien
-- Ermöglicht eine Schätzung der erwarteten Avocado Sign Positivität
-
-### 2.6 Brute-Force Optimierung
-
-Ein algorithmisches Tool zur Findung des „Best-Case" T2-Kriterien-Sets:
-
-- **Methodik:** Das System generiert jede mögliche Permutation von:
-  - Größenschwellenwerten (min bis max in 0,5mm-Schritten)
-  - Kombinationen der 4 morphologischen Features (2⁴ = 16 Teilmengen)
-  - Logik-Operatoren (AND/OR)
-- **Ausführung:** Läuft asynchron in einem dedizierten Web Worker, um UI-Freezing zu verhindern
-- **Zielmetriken:** Optimierung kann erfolgen für:
-  - Balanced Accuracy
-  - Youden-Index
-  - F1-Score
-  - AUC
-- **Ergebnisverwaltung:** Die Top 10 der besten Kombinationen werden angezeigt
-
-### 2.7 Vergleichsanalysen
-
-Das Comparison Tab ermöglicht rigorose statistische Vergleiche:
-
-- **Vergleichsmodi:**
-  - vs. Benutzer-definiert
-  - vs. Literatur (ESGAR, Mercury Study, Brown et al.)
-  - vs. Brute-Force optimiert
-
-- **Statistische Tests:**
-  - **McNemar's Test:** Chi-Quadrat und P-Wert für gepaarte Nominaldaten
-  - **DeLong-Äquivalent:** Statistischer Vergleich von AUCs
-
-- **Visuelle Ausgabe:** Überlagerte ROC-Kurven und gruppierte Balkendiagramme (Sensitivität/Spezifität)
-
-### 2.8 Results Tab mit Markdown-Export
-
-Der Results Tab bietet eine automatische Zusammenstellung aller publizierte-relevanten Daten in einem übersichtlichen Format:
-
-#### Funktionalität
-- **Automatische Datensammlung:** Alle relevanten Statistiken und Analysen werden automatisch zusammengestellt
-- **Markdown-Export:** Ein-Klick-Export der gesamten Ergebnisse als formatierte Markdown-Datei
-- **Publikationsbereit:** Das exportierte Markdown ist für wissenschaftliche Publikationen optimiert
-
-#### Enthaltene Sektionen
-Der Results Tab gliedert sich in 7 Hauptsektionen:
-
-1. **Patient Demographics:** Demografische Übersicht der Studienkohorte
-2. **Avocado Sign Performance:** Diagnostische Leistung des Avocado Sign mit Konfidenzintervallen
-3. **ESGAR 2016 Criteria Performance:** Performance der ESGAR-Standardkriterien
-4. **Cohort-Optimised T2 Performance:** Ergebnisse der kohorten-optimierten T2-Kriterien
-5. **Literature-Derived Criteria Performance:** Vergleich mit Literatur-basierten Kriterien
-6. **Node Size Analysis:** Differenzierte Analyse nach Lymphknoten-Größenkategorien
-7. **Statistical Comparisons:** Statistische Vergleiche (McNemar-Test, ROC-Analysen)
-
-#### Nutzung des Markdown-Exports
-1. Results Tab öffnen (zwischen Insights und Export)
-2. "Export as Markdown" Button klicken
-3. Die .md Datei wird automatisch heruntergeladen
-4. Die Datei kann direkt in wissenschaftliche Manuskripte integriert werden
-
-### 2.9 Reset-Funktion
-
-Die Reset-Funktion ermöglicht ein vollständiges Zurücksetzen aller Berechnungen und Einstellungen:
-
-- **Vollständiger Reset:** Alle Benutzereingaben, ausgewählten Kriterien und berechneten Ergebnisse werden auf die Standardwerte zurückgesetzt
-- **Schneller Zugriff:** Der Reset-Button ist prominent im Header platziert
-- **Sicherheitsabfrage:** Ein Bestätigungsdialog verhindert versehentliches Zurücksetzen
-- **Anwendungsbereich:** Zurückgesetzt werden:
-  - Kohorten-optimierte T2-Kriterien (Schwellenwerte, Morphologie-Einstellungen)
-  - Alle Statistik-Berechnungen
-  - Vergleichsanalysen
-  - Brute-Force-Ergebnisse
-
-### 2.10 Header-Bedienelemente
-
-Im Header der Anwendung stehen folgende Bedienelemente zur Verfügung:
-
-| Button | Funktion |
-|--------|----------|
-| **Show Quick Guide** | Öffnet einen Schnellstart-Dialog mit den wichtigsten Bedienhinweisen |
-| **Reset** | Setzt alle Berechnungen und Einstellungen auf die Standardwerte zurück |
-
-Die Bedienelemente sind so positioniert, dass sie jederzeit schnell erreichbar sind, ohne die aktuelle Analyse zu unterbrechen.
+1. [Einleitung](#1-einleitung)
+2. [Anwendungsbereich und Zielsetzung](#2-anwendungsbereich-und-zielsetzung)
+3. [Installation und Start](#3-installation-und-start)
+4. [Anwendungsoberfläche](#4-anwendungsoberfläche)
+5. [Funktionsübersicht](#5-funktionsübersicht)
+6. [Technische Architektur](#6-technische-architektur)
+7. [Berechnungslogik](#7-berechnungslogik)
+8. [Validierungsergebnisse](#8-validierungsergebnisse)
+9. [Entwicklung und Testing](#9-entwicklung-und-testing)
 
 ---
 
-## 3. Technische Details
+## 1. Einleitung
 
-### 3.1 Verwendete Technologien
+### Projektname und Kurzbeschreibung
 
-#### Frontend (Browser)
-- **Vanilla JavaScript (ES6+):** Modularer Aufbau mit Service-Oriented Architecture
-- **D3.js (v7):** Hochpräzise, vektorbasierte Datenvisualisierung (ROC-Kurven, Histogramme, Flowcharts)
-- **Bootstrap 5.3:** Responsives Grid-System und UI-Komponenten
-- **Tippy.js:** Kontext-sensitive Tooltips
-- **FontAwesome 6:** UI-Iconografie
+**AvocadoSign-ESGAR** ist eine interaktive Single-Page-Webanwendung zur wissenschaftlichen Auswertung des diagnostischen Werts des „Avocado Sign" (AS) im Vergleich zu etablierten T2-gewichteten MRI-Kriterien für das Lymphknoten-Staging beim Rektumkarzinom.
 
-#### Backend/Validierung (Node.js)
-- **Node.js:** Serverseitige Validierung und Datenanalyse
-- **JavaScript:** Gleiche Logik wie im Frontend für Konsistenz
+Die Anwendung ermöglicht Radiologen und Forschern:
+- Die Berechnung diagnostischer Performance-Kennzahlen (Sensitivität, Spezifität, AUC, PPV, NPV, Accuracy, F1-Score, Youden-Index)
+- Den Vergleich verschiedener T2-Kriteriensätze aus der Literatur
+- Die Durchführung einer Brute-Force-Optimierung zur Identifikation optimaler Kriterienkombinationen
+- Statistische Vergleiche zwischen Methoden (DeLong-Test, McNemar-Test)
+- Cross-Validation zur internen Validierung
+- Den Export von Publikationsdaten im Markdown-Format
 
-#### Architektur
-- **Single Page Application (SPA):** Läuft vollständig im Browser des Clients
-- **Kein Build-Step:** Native ES Modules (`import/export`), hosting auf jedem statischen File-Server möglich
-- **Multithreading:** Rechenintensive Aufgaben (Brute-Force) werden an Web Workers ausgelagert
+### Hintergrund
 
-### 3.2 Dateistruktur
+Die Avocado Sign Studie ist eine wissenschaftliche Untersuchung, die in Kooperation mit **European Radiology** durchgeführt wird. Das Projekt untersucht, ob der Avocado Sign – ein kontrastmittelgestütztes MRI-Merkmal, das die KM-Anreicherung in Lymphknoten beschreibt – eine verbesserte Detektion von Lymphknotenmetastasen beim Rektumkarzinom ermöglicht.
+
+Der Avocado Sign beschreibt das charakteristische Kontrastmittel-Enhancement-Muster maligner Lymphknoten, das einer Avocado-Frucht ähnelt: Eine zentrale fettähnliche Signalintensität mit ringförmiger KM-Anreicherung am Rand.
+
+---
+
+## 2. Anwendungsbereich und Zielsetzung
+
+### Primäre Anwendungsbereiche
+
+1. **Vergleich von Avocado Sign mit T2-gewichteten MRI-Kriterien**
+   - Systematischer Vergleich der diagnostischen Performance beider Methoden
+   - Analyse über verschiedene Patienten-Kohorten (Overall, Surgery alone, Neoadjuvant therapy)
+   - Statistische Bewertung der Unterschiede
+
+2. **Node Size Analysis**
+   - Analyse der Lymphknotengrößenverteilung
+   - Einteilung in Größenkategorien: Small (<5mm), Medium (5-9mm), Large (≥9mm)
+   - Proxy-AS-Status-Zuordnung basierend auf Größe
+   - Performance-Analyse nach Größenkategorien
+
+3. **Publikationsvorbereitung**
+   - Automatisierte Erstellung von Ergebnisberichten
+   - Markdown-Export für wissenschaftliche Publikationen
+   - Strukturierte Darstellung aller relevanten Kennzahlen
+
+4. **Optimierung von T2-Kriterien**
+   - Brute-Force-Grid-Suche zur Identifikation optimaler Kriterienkombinationen
+   - Integration mit Web Worker für nicht-blockierende Berechnung
+   - Cross-Validation zur Vermeidung von Overfitting
+
+### Zielsetzung
+
+- **Klinisch**: Bereitstellung eines Werkzeugs zur Validierung des Avocado Sign als ergänzendes Diagnosekriterium
+- **Wissenschaftlich**: Systematischer Vergleich mit etablierten ESGAR-Kriterien und Literatur-Datensätzen
+- **Methodisch**: Entwicklung einer reproduzierbaren Analysemethodik mit statistischer Validierung
+
+---
+
+## 3. Installation und Start
+
+### Voraussetzungen
+
+- **Browser**: Moderne Webbrowser mit ES6-Unterstützung (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- **Lokaler Webserver**: Für Service Worker und einige Features wird ein lokaler Server empfohlen
+- **Keine Backend-Abhängigkeiten**: Die Anwendung läuft vollständig im Browser
+
+### Startmöglichkeiten
+
+#### Option 1: Direkt im Browser öffnen
+
+Die Anwendung kann direkt durch Öffnen der `index.html` im Browser gestartet werden:
+
+```
+Öffnen Sie die Datei index.html in einem beliebigen modernen Webbrowser.
+```
+
+#### Option 2: Live Server (empfohlen)
+
+Für optimale Funktionalität (insbesondere Service Worker und Hot Reload):
+
+```bash
+# Node.js Live Server
+npx serve .
+
+# Oder mit Python
+python -m http.server 8000
+```
+
+#### Option 3: Lokaler Entwicklungsserver
+
+Mit dem in `package.json` konfigurierten Skript:
+
+```bash
+# Falls Node.js installiert ist
+npm install
+npm start
+```
+
+Die Anwendung ist standardmäßig unter `http://localhost:3000` verfügbar.
+
+---
+
+## 4. Anwendungsoberfläche
+
+### Header-Bedienelemente
+
+Der Header der Anwendung enthält folgende Elemente:
+
+- **Logo/Titel**: „AvocadoSign-ESGAR" mit Versionsangabe
+- **Kohorten-Auswahl (Dropdown)**:
+  - Overall (alle Patienten)
+  - Surgery alone (nur primär operierte Patienten)
+  - Neoadjuvant therapy (nur Patienten mit neoadjuvanter Therapie)
+- **Quick Guide Button**: Öffnet ein modal mit Kurzanleitung
+- **Reset Button**: Setzt alle Einstellungen auf Standardwerte zurück
+
+### Tab-Navigation
+
+Die Anwendung verfügt über sieben Haupt-Tabs:
+
+| Tab | Beschreibung |
+|-----|--------------|
+| **Data** | Patientenübersicht mit Such- und Filterfunktionen |
+| **Analysis** | Dashboard mit Verteilungsdiagrammen, T2-Kriterien-Definition, Brute-Force-Optimierung |
+| **Statistics** | Vollständige statistische Auswertung mit Cross-Validation |
+| **Comparison** | Methodenvergleich (AS vs. T2) mit statistischen Tests |
+| **Insights** | Mismatch-Analyse, Größenanalyse, Power-Analyse, Knotenzählanalyse |
+| **Results** | Publikationsrelevante Daten mit Markdown-Export |
+| **Export** | Datenexport in verschiedenen Formaten |
+
+---
+
+## 5. Funktionsübersicht
+
+### 5.1 Dashboard (Analysis Tab)
+
+Das Analysis-Dashboard bietet folgende Funktionen:
+
+#### Verteilungsdiagramme
+Sechs interaktive Diagramme zur Datenvisualisierung:
+- **Altersverteilung**: Histogramm nach Patientengruppe
+- **Geschlechterverteilung**: Balkendiagramm
+- **Therapieverteilung**: Kreisdiagramm
+- **N-Status-Verteilung**: Balkendiagramm
+- **Avocado Sign Status**: Balkendiagramm
+- **T2-Status-Verteilung**: Balkendiagramm
+
+#### T2-Kriterien-Controls
+Interaktive Steuerelemente zur Definition von T2-Bewertungskriterien:
+
+- **Size (Größe)**: Schwellenwert in mm (Standard: 5mm)
+- **Shape (Form)**: round, oval, oder beide
+- **Border (Rand)**: sharp, irregular, oder beide
+- **Homogeneity (Homogenität)**: homogeneous, heterogeneous, oder beide
+- **Signal (Signalintensität)**: lowSignal, intermediateSignal, highSignal, oder alle
+- **Logik**: AND-Verknüpfung, OR-Verknüpfung, oder ESGAR-Hybrid (KOMBINIERT)
+
+#### Brute-Force-Optimierung
+Das Brute-Force-Modul ermöglicht:
+
+- **Grid-Suche**: Erschöpfende Suche über alle Kriterienkombinationen
+- **Web Worker**: Nicht-blockierende Berechnung im Hintergrund
+- **Fortschrittsanzeige**: Live-Update des Berechnungsfortschritts
+- **Ergebnisübersicht**: Tabellarische Darstellung der Top-Ergebnisse
+
+#### Patienten-Tabelle
+- Sortierbare Spalten (ID, Alter, Geschlecht, Therapie, AS-Status, T2-Status, N-Status)
+- Detailansicht für einzelne Patienten
+- Markierung von AS+/T2+ und AS-/T2- Patienten
+
+### 5.2 Data Tab (Datenübersicht)
+
+Der Data-Tab zeigt:
+- Vollständige Patientenliste mit allen Attributen
+- Suchfunktion für Patienten-ID oder Name
+- Filterung nach Kohorte
+- Detailinformationen zu Lymphknoten
+
+### 5.3 Statistics Tab (Statistik)
+
+Der Statistics-Tab enthält:
+
+#### Deskriptive Statistik
+- **Demographics**: Altersverteilung (Mittelwert, Median, SD, Range), Geschlechterverteilung
+- **Lymphknoten-Statistik**: Durchschnittliche Knotenanzahl nach Gruppe
+
+#### Diagnostic Performance
+Tabellarische Darstellung aller Kennzahlen für AS und T2:
+- Sensitivity, Specificity, PPV, NPV
+- Accuracy, F1-Score, Youden-Index, Balanced Accuracy
+- AUC mit Konfidenzintervallen
+
+#### Cross-Validation
+- **Stratified 10-Fold Cross-Validation**
+- Optimismus-korrigierte Schätzung
+- Standardfehler der AUC
+
+#### Assoziationsmaße
+- Odds Ratio (OR)
+- Risk Difference (RD)
+- Phi-Koeffizient
+
+#### Ansichtsmodi
+- **Single View**: Ergebnisse für aktuelle Kohorte
+- **Comparison View**: Vergleich mehrerer Methoden
+
+### 5.4 Comparison Tab (Methodenvergleich)
+
+Zwei Vergleichsmodi:
+
+#### AS Performance View
+- Darstellung der AS-Performance für alle Kohorten
+- Vergleichstabelle mit allen Metriken
+- ROC-Kurven-Diagramm
+
+#### AS vs. T2 Comparison
+- **T2-Vergleichsbasis-Auswahl**:
+  - Literaturbasierte Kriteriensätze (ESGAR 2016, Rutegard 2025, Grone 2017, etc.)
+  - Data-driven Best-Case (Brute-Force optimiert)
+- **Statistische Tests**:
+  - DeLong-Test für AUC-Vergleich
+  - McNemar-Test für Accuracy-Vergleich
+- **Vergleichsdiagramm**: Grouped Bar Chart
+
+### 5.5 Insights Tab (Erkenntnisse)
+
+Vier Analysebereiche:
+
+#### Mismatch Analysis
+- **AS+/T2- Fälle**: AS positiv, aber T2 negativ (falsch-negative T2)
+- **AS-/T2+ Fälle**: AS negativ, aber T2 positiv (falsch-negative AS)
+- Identifikation von Diskrepanzen zwischen beiden Methoden
+
+#### Size Analysis
+- **Größenverteilung**: Histogramm nach N-Status
+- **Box-Plots**: Vergleich der Größenverteilung zwischen Gruppen
+- **Per-Size-Category Performance**: Performance nach Größenkategorie
+
+#### Power Analysis
+- **Post-hoc Power**: Statistische Power der beobachteten Effekte
+- **Sample-Size-Rechner**: Erforderliche Stichprobengröße für definierte Power
+
+#### Node Count Analysis
+- Aggregierte Lymphknotenzählung
+- Positive/Total-Verhältnisse für Pathology, AS, und T2
+
+### 5.6 Results Tab (Publikationsdaten)
+
+Strukturierte Darstellung für Publikationszwecke:
+
+1. **Demographics**: Patientencharakteristika
+2. **AS Performance**: Vollständige AS-Kennzahlen
+3. **ESGAR Performance**: ESGAR-Kriterien-Performance
+4. **Optimised T2**: Brute-Force optimierte T2-Kriterien
+5. **Literature Criteria**: Vergleich mit Literaturkriterien
+6. **Node Size**: Größenbezogene Analyse
+7. **Comparisons**: Statistische Vergleichsergebnisse
+
+Jede Sektion enthält:
+- Kennzahlen mit Konfidenzintervallen
+- p-Werte für statistische Tests
+- **Markdown-Export-Button**: Erstellt vollständigen Bericht
+
+### 5.7 Export Tab
+
+Exportfunktionen:
+- **CSV-Export**: Patientenrohdaten
+- **JSON-Export**: Strukturierte Ergebnisdaten
+- **Markdown-Export**: Publikationsformat
+
+---
+
+## 6. Technische Architektur
+
+### 6.1 Dateistruktur
 
 ```
 AvocadoSign-ESGAR/
-├── index.html                    # Haupteinstiegspunkt der Anwendung
-├── manifest.json                 # PWA Manifest
-├── sw.js                         # Service Worker für Offline-Fähigkeit
-├── validation_ci.js              # Validierungsskript für Konfidenzintervalle
-├── validation_node_size.js       # Validierung für Node Size Analysis
-├── validation_script.js          # Hauptsächliches Validierungsskript
-├── validation_script_v2.js       # Validierung Version 2
-├── validation_script_v3.js       # Validierung Version 3
-│
+├── index.html              # Haupteinstiegspunkt
+├── manifest.json           # PWA Manifest
+├── sw.js                  # Service Worker
 ├── css/
-│   └── style.css                 # Anwendungsweite Styles
-│
+│   └── style.css          # Anwendungsspezifische Stile
 ├── data/
-│   └── data.js                   # Patientendaten (JSON-Array)
-│
-├── docs/
-│   ├── Application_Guide.md      # Detaillierter Anwendungsleitfaden
-│   ├── Manuscript.md             # Wissenschaftliches Manuskript
-│   ├── Lurz_Schaefer_AvocadoSign_2025_initial_publication.pdf.txt
-│   └── Revision Letter.txt       # Antwortbrief an Gutachter
-│
+│   └── data.js            # Patientendaten (119 Datensätze)
 ├── js/
-│   ├── config.js                 # Anwendungskonfiguration
-│   ├── utils.js                  # Utility-Funktionen
-│   │
+│   ├── config.js          # Konfiguration und UI-Texte
+│   ├── utils.js           # Hilfsfunktionen
 │   ├── app/
-│   │   ├── main.js               # Haupteinstiegspunkt der App
-│   │   └── state.js              # Zustandsverwaltung
-│   │
+│   │   ├── main.js        # Hauptanwendungslogik
+│   │   └── state.js      # State-Management
 │   ├── core/
-│   │   ├── data_processor.js     # Datenverarbeitung
-│   │   ├── study_criteria_manager.js  # Studienkriterien-Verwaltung
-│   │   └── t2_criteria_manager.js     # T2-Kriterien-Verwaltung
-│   │
+│   │   ├── data_processor.js         # Datenverarbeitung
+│   │   ├── t2_criteria_manager.js   # T2-Kriterienverwaltung
+│   │   └── study_criteria_manager.js # Literaturkriterien
 │   ├── services/
-│   │   ├── brute_force_manager.js      # Brute-Force Optimierung
-│   │   ├── export_service.js           # Export-Funktionalität
-│   │   ├── markdown_export_service.js  # Markdown-Export für Results Tab
-│   │   ├── node_size_analysis.js       # Node Size Analysis Service
-│   │   ├── publication_service.js      # Publikations-Vorbereitung
-│   │   └── statistics_service.js       # Statistische Berechnungen
-│   │
+│   │   ├── statistics_service.js      # Statistische Berechnungen
+│   │   ├── node_size_analysis.js      # Größenanalyse
+│   │   ├── markdown_export_service.js # Markdown-Export
+│   │   ├── brute_force_manager.js    # Brute-Force-Optimierung
+│   │   ├── publication_service.js    # Publikationsfunktionen
+│   │   └── export_service.js         # Datenexport
 │   ├── ui/
-│   │   ├── event_manager.js      # Event-Verwaltung
-│   │   ├── ui_manager.js         # UI-Orchestrierung
-│   │   │
+│   │   ├── event_manager.js          # Event-Handling
+│   │   ├── ui_manager.js             # UI-Verwaltung
 │   │   ├── components/
-│   │   │   ├── chart_renderer.js      # Diagramm-Rendering (D3.js)
-│   │   │   ├── flowchart_renderer.js  # Flowchart-Rendering
+│   │   │   ├── chart_renderer.js      # D3.js Diagramme
+│   │   │   ├── flowchart_renderer.js  # Flowchart-Darstellung
 │   │   │   ├── table_renderer.js      # Tabellen-Rendering
 │   │   │   └── ui_components.js       # Wiederverwendbare UI-Komponenten
-│   │   │
 │   │   └── tabs/
-│   │       ├── analysis_tab.js    # Analyse-Tab (Kriterien-Editor)
-│   │       ├── comparison_tab.js  # Vergleichs-Tab
-│   │       ├── data_tab.js        # Rohdaten-Tab
-│   │       ├── export_tab.js      # Export-Tab
-│   │       ├── insights_tab.js    # Insights-Tab
-│   │       ├── results_tab.js     # Results-Tab (Markdown-Export)
-│   │       └── statistics_tab.js  # Statistik-Tab
-│
-├── plans/
-│   └── node_size_analysis_revision.md  # Planungsdokument für Revision
-│
-└── workers/
-    └── brute_force_worker.js      # Web Worker für Brute-Force Berechnungen
+│   │       ├── data_tab.js           # Data Tab
+│   │       ├── analysis_tab.js       # Analysis Tab
+│   │       ├── statistics_tab.js     # Statistics Tab
+│   │       ├── comparison_tab.js     # Comparison Tab
+│   │       ├── insights_tab.js       # Insights Tab
+│   │       ├── results_tab.js        # Results Tab
+│   │       └── export_tab.js         # Export Tab
+│   └── workers/
+│       └── brute_force_worker.js      # Web Worker für Brute-Force
+└── docs/                              # Dokumentation
 ```
 
-### 3.3 Module und ihre Funktionen
+### 6.2 Module und ihre Funktionen
 
-| Modul | Funktion |
-|-------|----------|
-| `data_processor.js` | Verarbeitet Rohdaten, extrahiert Patienten- und Lymphknoten-Informationen |
-| `statistics_service.js` | Berechnet alle diagnostischen Metriken inkl. Konfidenzintervalle |
-| `node_size_analysis.js` | Differenzierte Analyse nach Größenkategorien |
-| `brute_force_manager.js` | Orchestriert die Brute-Force-Optimierung |
-| `brute_force_worker.js` | Führt rechenintensive Permutations-Tests im Hintergrund aus |
-| `t2_criteria_manager.js` | Verwaltet T2-Malignitätskriterien |
-| `study_criteria_manager.js` | Verwaltet Studien-spezifische Kriterien (ESGAR, etc.) |
-| `chart_renderer.js` | Erzeugt D3.js-basierte Visualisierungen |
-| `markdown_export_service.js` | Generiert Markdown-Export für Publikationen |
-| `results_tab.js` | Results Tab UI und Interaktion |
+#### js/app/main.js (Hauptanwendungslogik)
+- **App-Klasse**: Zentrales Initialisierungs- und Koordinationsmodul
+- `initialize()`: Anwendungsstart, Event-Listener-Registrierung
+- `recalculateAllStats()`: Vollständige Neuberechnung aller Statistiken mit Cache-System
+- `handleCohortChange()`: Kohortenwechsel-Handler
+- `triggerBruteForce()`: Brute-Force-Optimierung starten
+
+#### js/app/state.js (State-Management)
+- **State-Objekt**: Verwaltet Anwendungsszustand
+- `getCurrentCohort()`: Aktuelle Kohorte abrufen
+- `setCurrentCohort(cohort)`: Kohorte setzen
+- `getComparisonView()`: Vergleichsansicht abrufen
+- `saveState()`: Persistierung in localStorage
+- `loadState()`: Laden aus localStorage
+
+#### js/config.js (Konfiguration)
+- **APP_CONFIG**: Globale Anwendungseinstellungen
+  - Kohorten-Definitionen (Overall, Surgery alone, Neoadjuvant)
+  - Storage-Keys
+  - Tab-Konfigurationen
+- **DEFAULT_T2_CRITERIA**: Standard-T2-Kriterien
+- **PUBLICATION_CONFIG**: Publikationsexport-Konfiguration
+- **UI_TEXTS**: Alle UI-Texte, Tooltips, Labels
+
+#### js/core/data_processor.js
+- `filterDataByCohort(data, cohort)`: Daten nach Kohorte filtern
+- `calculatePatientLevelStatus()`: Patienten-Level-Status berechnen
+- `processRawData()`: Rohdaten aufbereiten
+
+#### js/core/t2_criteria_manager.js
+- `evaluateNode()`: Einzelne Lymphknoten nach T2-Kriterien bewerten
+- `evaluateDataset()`: Gesamten Datensatz auswerten
+- `formatCriteriaForDisplay()`: Kriterien für Anzeige formatieren
+
+#### js/core/study_criteria_manager.js
+- `getAllStudyCriteriaSets()`: Alle Literaturkriteriensätze abrufen
+- `getStudyCriteriaSetById()`: Spezifischen Kriteriensatz finden
+- Vordefinierte Sets: ESGAR_2016, Rutegard_2025, Grone_2017, Jiang_2025, etc.
+
+#### js/services/statistics_service.js
+- `calculateDiagnosticPerformance()`: Alle Diagnostik-Kennzahlen
+- `calculateConfidences()`: Konfidenzintervalle (Wilson-Score, Bootstrap)
+- `calculateDeLongTest()`: DeLong-Test für AUC-Vergleich
+- `calculateMcNemarTest()`: McNemar-Test für Accuracy-Vergleich
+- `calculateFisherExactTest()`: Fisher-Exact-Test
+- `performStratifiedKFoldCV()`: Stratified 10-Fold Cross-Validation
+- `calculatePostHocPower()`: Post-hoc Power
+- `calculateRequiredSampleSize()`: Erforderliche Stichprobengröße
+
+#### js/services/node_size_analysis.js
+- `categorizeBySize()`: Kategorisierung nach Größe (small/medium/large)
+- `assignProxyASStatus()`: Proxy-AS-Status basierend auf Größe
+- `calculateSizeBasedPerformance()`: Performance nach Größenkategorie
+- `analyzeSizeDistribution()`: Größenverteilungsanalyse
+
+#### js/services/brute_force_manager.js
+- `runBruteForce()`: Brute-Force-Grid-Suche starten
+- `getAllResults()`: Alle Ergebnisse abrufen
+- `getBestResult()`: Bestes Ergebnis finden
+
+#### js/services/markdown_export_service.js
+- `generateMarkdownReport()`: Vollständigen Bericht erstellen
+- `exportDemographicsSection()`: Demographics-Sektion
+- `exportPerformanceSection()`: Performance-Sektion
+- `exportComparisonSection()`: Vergleichs-Sektion
+
+#### js/services/publication_service.js
+- `getPublicationData()`: Publikationsrelevante Daten extrahieren
+- `formatForPublication()`: Formatierung für Publikation
+
+### 6.3 Datenfluss
+
+```
+1. Daten laden
+   └─→ data/data.js → window.patientDataRaw
+
+2. Daten verarbeiten
+   └─→ core/data_processor.js → processedData
+
+3. T2-Kriterien anwenden
+   └─→ core/t2_criteria_manager.js → T2-Status pro Patient
+
+4. Statistiken berechnen
+   └─→ services/statistics_service.js → Kennzahlen mit CI
+
+5. Visualisierung
+   └─→ ui/components/chart_renderer.js → D3.js Diagramme
+
+6. State-Management
+   └─→ app/state.js → localStorage Persistenz
+```
 
 ---
 
-## 4. Installationsanleitung
+## 7. Berechnungslogik
 
-### 4.1 Voraussetzungen
+### 7.1 Patient-Level-Prinzip
 
-- **Modernes Browser:** Chrome, Firefox, Edge oder Safari (mit ES Modules Support)
-- **Node.js (optional):** Für serverseitige Validierung erforderlich
+Die Anwendung folgt dem **Patient-Level-Prinzip** für die Diagnostik:
 
-### 4.2 Anwendung ausführen
+> Ein Patient wird als „positiv" klassifiziert, wenn **mindestens ein** Lymphknoten die jeweiligen Kriterien erfüllt.
 
-#### Variante A: Direkt im Browser (empfohlen)
+Dieses Prinzip gilt für:
+- **Avocado Sign (AS)**: Positiv, wenn mindestens ein AS-positiver Lymphknoten vorhanden
+- **T2-Kriterien**: Positiv, wenn mindestens ein Lymphknoten die definierten T2-Kriterien erfüllt
+- **Pathologie (Goldstandard)**: Positiv, wenn mindestens ein pathologisch positiver Lymphknoten vorhanden
 
-1. **Klonen:** Repository auf lokale Maschine klonen
-2. **Daten:** Sicherstellen, dass `data/data.js` mit gültigen JSON-Daten gefüllt ist
-3. **Starten:** `index.html` in einem modernen Browser öffnen
+### 7.2 ESGAR-Kriterien
 
-*Hinweis:* Aufgrund von CORS-Richtlinien in einigen Browsern kann der direkte file://-Zugriff für Web Workers eingeschränkt sein. Es wird empfohlen, einen einfachen lokalen Server zu verwenden:
+Die Anwendung implementiert die **ESGAR 2016 Konsensus-Kriterien** mit folgender Hybrid-Logik:
 
-**Mit VS Code Live Server:**
-- VS Code öffnen
-- Rechtsklick auf `index.html` → „Open with Live Server"
+#### Primary Staging (neoadjuvante Therapie)
+- **Size ≥ 9mm** ODER
+- **Size 5-8mm + 2 morphologische Features** ODER
+- **Size < 5mm + 3 morphologische Features**
 
-**Mit Python:**
-```bash
-python -m http.server 8000
-```
-Dann `http://localhost:8000` im Browser öffnen
+#### Restaging (nach neoadjuvanter Therapie)
+- **Size ≥ 5mm** (unabhängig von Morphologie)
 
-**Mit Node.js (http-server):**
-```bash
-npx http-server .
-```
+Morphologische Features:
+- Round shape
+- Irregular border
+- Heterogeneous signal intensity
 
-#### Variante B: Node.js Validierung
+### 7.3 T2-Kriterien-Kategorien
 
-Für serverseitige Validierung der statistischen Berechnungen:
+Die Anwendung unterstützt verschiedene T2-Kriterien-Typen:
 
-```bash
-# Node.js Abhängigkeiten installieren (falls vorhanden)
-npm install
+| Kriterium | Optionen | Beschreibung |
+|-----------|----------|--------------|
+| Size | ≥X mm | Größenschwellenwert |
+| Shape | round, oval | Knotenform |
+| Border | sharp, irregular | Konturierung |
+| Homogeneity | homogeneous, heterogeneous | Binnensignal |
+| Signal | low, intermediate, high | Signalintensität |
 
-# Validierungsskript ausführen
-node validation_ci.js
-node validation_node_size.js
-```
+### 7.4 Logik-Varianten
 
----
+- **AND**: Alle ausgewählten Kriterien müssen erfüllt sein
+- **OR**: Mindestens ein Kriterium muss erfüllt sein
+- **KOMBINIERT**: ESGAR-Hybrid-Logik
 
-## 5. Validierungsergebnisse
+### 7.5 Kohorten-Optimierung
 
-### 5.1 Avocado Sign Performance
+Die Anwendung analysiert drei Patienten-Kohorten:
 
-Die Validierung der Avocado Sign Methode zeigt folgende Ergebnisse:
+1. **Overall**: Alle 119 Patienten
+2. **Surgery alone**: Primär operierte Patienten ohne Vorbehandlung
+3. **Neoadjuvant therapy**: Patienten mit neoadjuvanter Radiochemotherapie
 
-| Metrik | Wert | 95% Konfidenzintervall |
-|--------|------|------------------------|
-| **AUC** | 0,91 | 0,87 - 0,95 |
-| **Sensitivität** | 94,6% | 89,2% - 97,3% |
-| **Spezifität** | 87,5% | 81,3% - 92,1% |
-| **PPV** | 88,7% | 83,1% - 92,8% |
-| **NPV** | 94,1% | 88,9% - 97,2% |
-| **Genauigkeit** | 90,8% | 86,9% - 93,7% |
+Jede Kohorte wird separat ausgewertet, um therapiespezifische Unterschiede zu identifizieren.
 
-Das Avocado Sign demonstriert eine **herausragende diagnostische Leistung** mit einer AUC von 0,91, was auf eine exzellente Fähigkeit zur Unterscheidung zwischen malignen und benignen Lymphknoten hinweist.
+### 7.6 Cross-Validation
 
-### 5.2 ESGAR-Kriterien Performance
+Die Anwendung implementiert eine **Stratified 10-Fold Cross-Validation**:
 
-Zum Vergleich die Performance der ESGAR-Kriterien:
+1. Daten werden in 10 gleich große Folds aufgeteilt
+2. Stratifizierung nach N-Status (Erhalt der Klassenverteilung)
+3. Für jedes Fold: Training auf 9/10, Test auf 1/10
+4. Berechnung des Optimismus (Differenz zwischen apparenter und optimismus-korrigierter Performance)
 
-| Metrik | Wert | 95% Konfidenzintervall |
-|--------|------|------------------------|
-| **AUC** | 0,72 | 0,65 - 0,79 |
-| **Sensitivität** | 78,4% | 71,2% - 84,5% |
-| **Spezifität** | 65,3% | 57,8% - 72,2% |
+### 7.7 Statistische Tests
 
-Die ESGAR-Kriterien zeigen eine moderate Performance mit einer AUC von 0,72. Das Avocado Sign übertrifft die ESGAR-Kriterien signifikant in allen Hauptmetriken.
+#### DeLong-Test
+- Vergleicht AUCs zweier korrelierter ROC-Kurven
+- Berechnet Varianz-Kovarianz-Matrix der AUCs
+- Zwei-seitiger p-Wert für Signifikanz
 
-### 5.3 Node Size Analysis Ergebnisse
+#### McNemar-Test
+- Vergleicht paired proportions (Accuracy)
+- Korrigiert für diskordante Paare
+-適用 für gepaarte Stichproben
 
-Die differenzierte Analyse nach Größenkategorien zeigt:
+#### Fisher-Exact-Test
+- Für kleine Stichproben in Kontingenztafeln
+- Exakte Berechnung der p-Werte
 
-| Größenkategorie | Patienten (n) | AS Sensitivität | AS Spezifität |
-|-----------------|---------------|-----------------|---------------|
-| **< 5mm (klein)** | 45 | 62,5% | 94,2% |
-| **5-9mm (mittel)** | 89 | 87,3% | 89,1% |
-| **≥ 9mm (groß)** | 112 | 98,2% | 72,4% |
+### 7.8 Konfidenzintervalle
 
-**Interpretation:**
-- Bei **kleinen Lymphknoten (< 5mm)** zeigt das Avocado Sign eine hohe Spezifität (94,2%), aber moderate Sensitivität (62,5%). Dies ist klinisch relevant, da kleine Lymphknoten oft schwer zu bewerten sind.
-- Bei **mittleren Lymphknoten (5-9mm)** zeigt sich die beste Balance mit hoher Sensitivität (87,3%) und Spezifität (89,1%).
-- Bei **großen Lymphknoten (≥ 9mm)** ist die Sensitivität nahezu perfekt (98,2%), jedoch ist die Spezifität reduziert (72,4%), was auf mehr falsch-positive Ergebnisse hinweist.
+- **Wilson-Score CI**: Für Proportionen (Sensitivität, Spezifität, etc.)
+- **Bootstrap CI**: Für AUC und komplexe Metriken
+- **Standardfehler-basiert**: Für abgeleitete Metriken
 
----
+### 7.9 Node Size Analysis
 
-## 6. Berechnungslogik
+Die Größenanalyse unterteilt Lymphknoten in:
 
-### 6.1 Patient-Level-Prinzip
+| Kategorie | Größe | Proxy-AS-Status-Zuordnung |
+|-----------|-------|---------------------------|
+| Small | < 5mm | Überwiegend AS-negativ |
+| Medium | 5-9mm | Gemischte Verteilung |
+| Large | ≥ 9mm | Überwiegend AS-positiv |
 
-Die Anwendung arbeitet nach dem **Patient-Level-Prinzip**, nicht nach dem Lymphknoten-Level:
-
-1. **Worst-Case-Logik:** Wenn bei einem Patienten **auch nur ein** Lymphknoten die Malignitätskriterien erfüllt, wird der gesamte Patient als „positiv" klassifiziert.
-2. **Begründung:** In der klinischen Praxis ist das Vorhandensein eines einzigen malignitätsverdächtigen Lymphknotens clinically relevant und beeinflusst das Staging.
-
-**Beispiel:**
-- Patient A hat 3 Lymphknoten: 2 benigne, 1 maligne
-- → Patient wird als N+ (positiv) klassifiziert
-
-### 6.2 Proxy-AS-Status
-
-Der Proxy-AS-Status wird verwendet, wenn der direkte Avocado Sign Status nicht verfügbar ist oder als zusätzlicher Prädiktor:
-
-**Berechnung:**
-```
-Proxy-AS-positiv = (Größe ≥ Schwellenwert) ODER (morphologisches Kriterium erfüllt)
-```
-
-**Verwendung:**
-- In der Node Size Analysis als Schätzung
-- Bei fehlenden Avocado Sign Daten
-- Für Subgruppen-Analyse
-
-### 6.3 Größenkategorien
-
-Die Lymphknoten werden in drei Größenkategorien eingeteilt:
-
-| Kategorie | Kurzachsendurchmesser | Klinische Bedeutung |
-|-----------|----------------------|---------------------|
-| **Klein** | < 5mm | Häufige Größe bei reaktiven Lymphknoten; schwer zu beurteilen |
-| **Mittel** | 5-9mm | Grauzone; benötigt zusätzliche Kriterien für Malignitätsbewertung |
-| **Groß** | ≥ 9mm | Höhere Malignitätswahrscheinlichkeit per Größe allein |
-
-### 6.4 Statistische Methodik
-
-#### Konfidenzintervalle
-Alle Metriken include 95% Konfidenzintervalle, berechnet mittels **Wilson-Score-Intervall-Methode**, die auch bei kleinen Stichproben robuste Schätzungen liefert.
-
-#### Odds Ratio
-```
-OR = (TP × TN) / (FP × FN)
-```
-
-#### Likelihood Ratios
-```
-LR+ = Sensitivität / (1 - Spezifität)
-LR- = (1 - Sensitivität) / Spezifität
-```
-
-#### McNemar's Test
-```
-χ² = (|FP - FN| - 1)² / (FP + FN)
-```
-Für gepaarte Nominaldaten zum Testen signifikanter Unterschiede in der Genauigkeit.
+Die Proxy-Zuordnung basiert auf historischen Daten und ermöglicht:
+- Abschätzung der AS-Performance ohne Kontrastmittel
+- Identifikation von Größen-basierten Diagnoselücken
 
 ---
 
-## 7. Datenmodell
+## 8. Validierungsergebnisse
 
-Die Anwendung konsumiert einen Datensatz (`data/data.js`) als JSON-Array mit folgendem Schema:
+### 8.1 Avocado Sign Performance
 
-```json
-{
-  "id": "String (Eindeutige Patienten-ID)",
-  "nStatus": "String ('N0', 'N1', 'N1a', 'N1b', 'N2', 'N2a', 'N2b')",
-  "t2Nodes": [
-    {
-      "size": "Number (Kurzachsendurchmesser in mm)",
-      "shape": "String ('round' | 'oval' | 'irregular')",
-      "border": "String ('smooth' | 'irregular' | 'spiculated')",
-      "signal": "String ('homogeneous' | 'heterogeneous')",
-      "avocadoSign": "Boolean (true = positives Zeichen, false = negatives Zeichen)"
-    }
-  ]
-}
-```
+Die Anwendung berechnet folgende Kennzahlen für den Avocado Sign:
 
-- **N-Status-Parsing:** Die Anwendung bildet automatisch detaillierte N-Stadien (z.B. N1a, N2b) auf binäre Ergebnisse (N+ vs. N0) ab.
-- **Lymphknoten-Aggregation:** Die Patient-Level-Diagnose wird durch den „schlechtesten" Lymphknoten bestimmt.
+| Metrik | Beschreibung | Typ |
+|--------|--------------|-----|
+| Sensitivity | Wahrscheinlichkeit, kranken Patienten als krank zu erkennen | Rate |
+| Specificity | Wahrscheinlichkeit, gesunde Patienten als gesund zu erkennen | Rate |
+| PPV | Positiver Prädiktiver Wert | Rate |
+| NPV | Negativer Prädiktiver Wert | Rate |
+| Accuracy | Gesamtübereinstimmung | Rate |
+| AUC | Area Under ROC Curve | Fläche |
+| F1-Score | Harmonisches Mittel von Precision/Recall | Score |
+| Youden-Index | Maximale Summe aus Sens + Spec - 1 | Index |
+| Balanced Accuracy | Durchschnitt aus Sens und Spec | Rate |
+
+### 8.2 ESGAR Performance
+
+Vollständige Evaluierung der ESGAR 2016 Kriterien:
+- Separate Berechnung für Primary Staging und Restaging
+- Vergleich der ESGAR-Varianten
+- Identifikation von Stärken und Schwächen
+
+### 8.3 Vergleichende Analyse
+
+Statistische Vergleiche zwischen:
+- AS vs. ESGAR
+- AS vs. Literaturkriterien
+- AS vs. optimierte T2-Kriterien
+
+Signifikanzprüfung mittels:
+- DeLong-Test (AUC)
+- McNemar-Test (Accuracy)
+- Fisher-Exact-Test (Kontingenztafeln)
 
 ---
 
-## 8. Lizenz und Kontakt
+## 9. Entwicklung und Testing
 
-- **Lizenz:** MIT License
-- **Status:** Produktionsreif
+### 9.1 Validierungsskripte
+
+Die Anwendung enthält integrierte Validierungsfunktionen:
+
+- **Datenvalidierung**: Prüfung auf Vollständigkeit und Konsistenz
+- **Statistik-Validierung**: Plausibilitätsprüfungen der berechneten Kennzahlen
+- **UI-Validierung**: Automatische Prüfung der Benutzeroberfläche
+
+### 9.2 Testdaten
+
+Die Anwendung enthält 119 reale Patientendatensätze mit:
+
+- Vollständigen demographischen Daten (Alter, Geschlecht, Therapie)
+- Avocado Sign Status (pro Patient und pro Lymphknoten)
+- T2-Lymphknoten-Charakteristika (Größe, Form, Rand, Homogenität, Signal)
+- Pathologischen Goldstandard (N-Status, Lymphknotenanzahl)
+
+### 9.3 Browser-Kompatibilität
+
+Getestet und unterstützt in:
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+### 9.4 Technische Hinweise
+
+- **Service Worker**: Ermöglicht Offline-Nutzung und PWA-Features
+- **LocalStorage**: Persistenz von Benutzereinstellungen
+- **Web Worker**: Nicht-blockierende Berechnungen für Brute-Force
+- **D3.js**: Interaktive Datenvisualisierung
+- **Bootstrap 5**: Responsives UI-Framework
 
 ---
 
-*© 2025 Medizinisches Forschungstool - Avocado Sign Projekt*
+## Lizenz
+
+Diese Anwendung ist für wissenschaftliche und klinische Forschungszwecke entwickelt worden.
+
+---
+
+## Kontakt und Support
+
+Bei Fragen oder Problemen wenden Sie sich bitte an das Entwicklungsteam.
+
+---
+
+*Version 1.0 | Letzte Aktualisierung: 2025*
