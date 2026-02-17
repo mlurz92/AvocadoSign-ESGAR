@@ -1,5 +1,9 @@
 window.uiManager = (() => {
 
+    // Content-Cache für Tab-Content-Optimierung
+    const _lastTabContent = new Map();
+    const _lastElementContent = new Map();
+
     function updateLayoutMetrics() {
         const header = document.querySelector('header.fixed-top');
         const nav = document.querySelector('nav.navigation-tabs');
@@ -48,10 +52,28 @@ window.uiManager = (() => {
         const paneId = `${tabId}-pane`;
         const paneElement = document.getElementById(paneId);
         if (paneElement) {
+            const newContent = contentGenerator();
+            
+            // Prüfe ob sich Content geändert hat (Cache-Vergleich)
+            const cachedContent = _lastTabContent.get(tabId);
+            if (cachedContent === newContent) {
+                return; // Kein Update nötig - Content identisch
+            }
+            
+            // Content hat sich geändert - Update durchführen
             const oldTippys = paneElement.querySelectorAll('[data-tippy-content]');
             oldTippys.forEach(el => { if (el._tippy) el._tippy.destroy(); });
-            paneElement.innerHTML = contentGenerator();
+            paneElement.innerHTML = newContent;
+            _lastTabContent.set(tabId, newContent);
             initializeTooltips(paneElement);
+        }
+    }
+
+    function invalidateTabContentCache(tabId) {
+        if (tabId) {
+            _lastTabContent.delete(tabId);
+        } else {
+            _lastTabContent.clear();
         }
     }
 
@@ -330,10 +352,26 @@ window.uiManager = (() => {
     function updateElementHTML(elementId, htmlContent) {
         const element = document.getElementById(elementId);
         if (element) {
+            // Prüfe ob sich Content geändert hat (Cache-Vergleich)
+            const cachedContent = _lastElementContent.get(elementId);
+            if (cachedContent === htmlContent) {
+                return; // Kein Update nötig - Content identisch
+            }
+            
+            // Content hat sich geändert - Update durchführen
             const oldTippys = element.querySelectorAll('[data-tippy-content]');
             oldTippys.forEach(el => { if (el._tippy) el._tippy.destroy(); });
             element.innerHTML = htmlContent;
+            _lastElementContent.set(elementId, htmlContent);
             initializeTooltips(element);
+        }
+    }
+
+    function invalidateElementContentCache(elementId) {
+        if (elementId) {
+            _lastElementContent.delete(elementId);
+        } else {
+            _lastElementContent.clear();
         }
     }
 
@@ -394,6 +432,7 @@ window.uiManager = (() => {
         updateLayoutMetrics,
         updateCohortButtonsUI,
         renderTabContent,
+        invalidateTabContentCache,
         attachRowCollapseListeners,
         toggleAllDetails,
         updateSortIcons,
@@ -407,6 +446,7 @@ window.uiManager = (() => {
         updateExportUI,
         showQuickGuide,
         updateElementHTML,
+        invalidateElementContentCache,
         highlightElement,
         showAutoBfPrompt,
         showAutoBfProgress,

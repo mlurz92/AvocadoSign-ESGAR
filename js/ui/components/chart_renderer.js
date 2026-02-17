@@ -1,5 +1,45 @@
 window.chartRenderer = (() => {
 
+    // Chart-Cache für Performance-Optimierung
+    const _chartCache = new Map(); // Speichert Chart-Daten-Hashes
+    const _svgContainers = new Map(); // Speichert SVG-Referenzen
+
+    // Hash-Funktion für Chart-Daten (einfache Implementierung)
+    function _hashData(data) {
+        if (!data) return null;
+        try {
+            return JSON.stringify(data);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // Prüfe ob sich Chart-Daten geändert haben
+    function _hasDataChanged(targetElementId, newData) {
+        const cachedHash = _chartCache.get(targetElementId);
+        const newHash = _hashData(newData);
+        return cachedHash !== newHash;
+    }
+
+    // Speichere Chart-Daten im Cache
+    function _cacheChartData(targetElementId, data) {
+        const hash = _hashData(data);
+        if (hash) {
+            _chartCache.set(targetElementId, hash);
+        }
+    }
+
+    // Lösche Cache für spezifischen Chart oder alle
+    function clearChartCache(targetElementId) {
+        if (targetElementId) {
+            _chartCache.delete(targetElementId);
+            _svgContainers.delete(targetElementId);
+        } else {
+            _chartCache.clear();
+            _svgContainers.clear();
+        }
+    }
+
     function createSvgContainer(targetElementId, options = {}) {
         const container = d3.select(`#${targetElementId}`);
         if (container.empty() || !container.node()) { return null; }
@@ -54,12 +94,23 @@ window.chartRenderer = (() => {
     // --- CHART IMPLEMENTATIONS ---
 
     function renderAgeDistributionChart(ageData, targetElementId, options = {}) {
+        // Prüfe ob sich Daten geändert haben (Performance-Optimierung)
+        if (!_hasDataChanged(targetElementId, ageData) && !options.forceRender) {
+            return; // Kein Update nötig
+        }
+
         const setupOptions = { ...options, margin: { ...window.APP_CONFIG.CHART_SETTINGS.DEFAULT_MARGIN, ...options.margin } };
         const containerSetup = createSvgContainer(targetElementId, setupOptions);
         if (!containerSetup) return;
         const { svg, chartArea, innerWidth, innerHeight, width, height, margin } = containerSetup;
         const tooltip = createTooltip();
         const barColor = window.APP_CONFIG.CHART_SETTINGS.AS_COLOR;
+        
+        // Cache die Daten
+        _cacheChartData(targetElementId, ageData);
+        
+        // Animation nur beim ersten Render oder wenn erzwungen
+        const animationDuration = options.skipAnimation ? 0 : window.APP_CONFIG.CHART_SETTINGS.ANIMATION_DURATION_MS;
 
         if (!Array.isArray(ageData) || ageData.length === 0) {
             chartArea.append('text').attr('x', innerWidth / 2).attr('y', innerHeight / 2).attr('text-anchor', 'middle').attr('class', 'text-muted small').text('No age data available.');
@@ -123,12 +174,17 @@ window.chartRenderer = (() => {
                 tooltip.transition().duration(200).style("opacity", 0);
                 d3.select(event.currentTarget).style("opacity", 0.8).style("stroke", "none");
             })
-            .transition().duration(window.APP_CONFIG.CHART_SETTINGS.ANIMATION_DURATION_MS).ease(d3.easeCubicOut)
+            .transition().duration(animationDuration).ease(d3.easeCubicOut)
             .attr("y", d => y(d.length))
             .attr("height", d => Math.max(0, innerHeight - y(d.length)));
     }
 
     function renderPieChart(data, targetElementId, options = {}) {
+        // Prüfe ob sich Daten geändert haben (Performance-Optimierung)
+        if (!_hasDataChanged(targetElementId, data) && !options.forceRender) {
+            return; // Kein Update nötig
+        }
+        
         const setupOptions = { ...options, margin: options.useCompactMargins ? { ...window.APP_CONFIG.CHART_SETTINGS.COMPACT_PIE_MARGIN, ...options.margin } : { ...window.APP_CONFIG.CHART_SETTINGS.DEFAULT_MARGIN, ...options.margin }, legendBelow: options.legendBelow ?? options.useCompactMargins, legendItemCount: data?.length || 0 };
         const containerSetup = createSvgContainer(targetElementId, setupOptions);
         if (!containerSetup) return;
@@ -137,6 +193,12 @@ window.chartRenderer = (() => {
         const colorScheme = [window.APP_CONFIG.CHART_SETTINGS.AS_COLOR, window.APP_CONFIG.CHART_SETTINGS.T2_COLOR, window.APP_CONFIG.CHART_SETTINGS.N_NEG_COLOR, window.APP_CONFIG.CHART_SETTINGS.N_POS_COLOR];
         const validData = data.filter(d => d && typeof d.value === 'number' && d.value >= 0 && typeof d.label === 'string');
         const totalValue = d3.sum(validData, d => d.value);
+        
+        // Cache die Daten
+        _cacheChartData(targetElementId, data);
+        
+        // Animation nur beim ersten Render oder wenn erzwungen
+        const animationDuration = options.skipAnimation ? 0 : window.APP_CONFIG.CHART_SETTINGS.ANIMATION_DURATION_MS;
 
         if (validData.length === 0 || totalValue <= 0) {
             chartArea.append('text').attr('x', innerWidth / 2).attr('y', innerHeight / 2).attr('text-anchor', 'middle').attr('class', 'text-muted small').text('No data available.');
@@ -172,7 +234,7 @@ window.chartRenderer = (() => {
                 tooltip.transition().duration(200).style("opacity", 0);
                 d3.select(this).transition().duration(100).style("opacity", 0.85).attr("transform", "scale(1)");
             })
-            .transition().duration(window.APP_CONFIG.CHART_SETTINGS.ANIMATION_DURATION_MS).ease(d3.easeCubicOut)
+            .transition().duration(animationDuration).ease(d3.easeCubicOut)
             .attrTween("d", d => {
                 const i = d3.interpolate({startAngle: d.startAngle, endAngle: d.startAngle}, d);
                 return t => arcGenerator(i(t));
@@ -200,11 +262,22 @@ window.chartRenderer = (() => {
     }
 
     function renderComparisonBarChart(chartData, targetElementId, options = {}, t2Label = 'T2') {
+        // Prüfe ob sich Daten geändert haben (Performance-Optimierung)
+        if (!_hasDataChanged(targetElementId, chartData) && !options.forceRender) {
+            return; // Kein Update nötig
+        }
+        
         const setupOptions = { ...options, margin: { top: 20, right: 20, bottom: 60, left: 50, ...options.margin } };
         const containerSetup = createSvgContainer(targetElementId, setupOptions);
         if (!containerSetup) return;
         const { svg, chartArea, innerWidth, innerHeight, margin, height } = containerSetup;
         const tooltip = createTooltip();
+        
+        // Cache die Daten
+        _cacheChartData(targetElementId, chartData);
+        
+        // Animation nur beim ersten Render oder wenn erzwungen
+        const animationDuration = options.skipAnimation ? 0 : window.APP_CONFIG.CHART_SETTINGS.ANIMATION_DURATION_MS;
         
         if (!Array.isArray(chartData) || chartData.length === 0) {
             chartArea.append('text').attr('x', innerWidth / 2).attr('y', innerHeight / 2).attr('text-anchor', 'middle').attr('class', 'text-muted small').text('No comparison data.');
@@ -257,7 +330,7 @@ window.chartRenderer = (() => {
                 tooltip.transition().duration(200).style("opacity", 0);
                 d3.select(this).style("opacity", 0.9).style("stroke", "none");
             })
-            .transition().duration(window.APP_CONFIG.CHART_SETTINGS.ANIMATION_DURATION_MS).ease(d3.easeCubicOut)
+            .transition().duration(animationDuration).ease(d3.easeCubicOut)
             .attr("y", d => y(d.value ?? 0)).attr("height", d => Math.max(0, innerHeight - y(d.value ?? 0)));
         
         const legendGroup = svg.append("g").attr("class", "legend bar-legend")
@@ -682,7 +755,8 @@ window.chartRenderer = (() => {
         renderFeatureImportanceChart,
         renderBoxPlot,
         renderGroupedHistogram,
-        renderSizePerformanceChart
+        renderSizePerformanceChart,
+        clearChartCache
     });
 
 })();

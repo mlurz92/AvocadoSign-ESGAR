@@ -7,6 +7,13 @@ class App {
         this.libraryStatus = {};
         this.isAutoBfRunning = false;
         this.autoBfQueue = [];
+        
+        // Cache-System für Statistik-Berechnungen
+        this._statsDirty = true;
+        this._statsCache = null;
+        this._lastCriteriaJson = null;
+        this._lastLogic = null;
+        this._lastBruteForceResultsJson = null;
     }
 
     async init() {
@@ -104,20 +111,41 @@ class App {
                 bootstrap: () => !!window.bootstrap
             };
 
-            const pollInterval = 100;
+            // Optimiertes Checking mit requestAnimationFrame für schnellere Reaktion
             const timeout = 5000;
-            let elapsedTime = 0;
+            const startTime = performance.now();
 
-            const intervalId = setInterval(() => {
+            const check = () => {
                 const allLoaded = Object.values(librariesToWaitFor).every(checkFn => checkFn());
-                if (allLoaded || elapsedTime >= timeout) {
-                    clearInterval(intervalId);
+                const elapsed = performance.now() - startTime;
+                
+                if (allLoaded) {
                     const finalStatus = {};
                     Object.keys(librariesToWaitFor).forEach(lib => finalStatus[lib] = librariesToWaitFor[lib]());
                     resolve(finalStatus);
+                    return true;
                 }
-                elapsedTime += pollInterval;
-            }, pollInterval);
+                
+                if (elapsed >= timeout) {
+                    const finalStatus = {};
+                    Object.keys(librariesToWaitFor).forEach(lib => finalStatus[lib] = librariesToWaitFor[lib]());
+                    resolve(finalStatus);
+                    return true;
+                }
+                
+                return false;
+            };
+
+            // Sofort prüfen (für Fall dass Scripts bereits geladen sind)
+            if (check()) return;
+
+            // Mit requestAnimationFrame prüfen (schneller und effizienter als setInterval)
+            const frameCheck = () => {
+                if (!check()) {
+                    requestAnimationFrame(frameCheck);
+                }
+            };
+            requestAnimationFrame(frameCheck);
         });
     }
 
@@ -148,6 +176,8 @@ class App {
                     if (payload?.results?.length > 0) {
                         this.showBruteForceDetails(payload.metric, payload.cohort);
                         window.uiManager.showToast('Optimization finished.', 'success');
+                        // Cache invalidieren da sich Brute-Force-Ergebnisse geändert haben
+                        this.invalidateStatsCache();
                         this.recalculateAllStats();
                         this.refreshCurrentTab();
                     } else {
@@ -192,11 +222,56 @@ class App {
         }
     }
     
+    /**
+     * Invalidiert den Statistik-Cache. Muss aufgerufen werden, wenn sich
+     * relevante Daten ändern (Kriterien, Logik, Brute-Force-Ergebnisse).
+     */
+    invalidateStatsCache() {
+        this._statsDirty = true;
+        this._statsCache = null;
+        // Auch den internen Cache des statisticsService invalidieren
+        if (window.statisticsService && typeof window.statisticsService.clearCache === 'function') {
+            window.statisticsService.clearCache();
+        }
+    }
+    
+    /**
+     * Berechnet alle Statistiken neu, aber nur wenn der Cache dirty ist
+     * oder sich die Input-Parameter geändert haben.
+     * @returns {Object} Die Statistiken (aus Cache oder neu berechnet)
+     */
     recalculateAllStats() {
         const criteria = window.t2CriteriaManager.getAppliedCriteria();
         const logic = window.t2CriteriaManager.getAppliedLogic();
         const bruteForceResults = window.bruteForceManager.getAllResults();
-        this.allCohortStats = window.statisticsService.calculateAllPublicationStats(this.processedData, criteria, logic, bruteForceResults);
+        
+        // Serialisiere Parameter für Vergleich (JSON für tiefe Objekt-Vergleiche)
+        const criteriaJson = JSON.stringify(criteria);
+        const bruteForceResultsJson = JSON.stringify(bruteForceResults);
+        
+        // Prüfe ob sich etwas geändert hat
+        const criteriaChanged = this._lastCriteriaJson !== criteriaJson;
+        const logicChanged = this._lastLogic !== logic;
+        const bfResultsChanged = this._lastBruteForceResultsJson !== bruteForceResultsJson;
+        
+        if (!this._statsDirty && !criteriaChanged && !logicChanged && !bfResultsChanged) {
+            // Cache ist noch gültig - verwende gecachte Statistiken
+            return this._statsCache;
+        }
+        
+        // Cache ist dirty oder Parameter haben sich geändert - neu berechnen
+        this._statsCache = window.statisticsService.calculateAllPublicationStats(
+            this.processedData, criteria, logic, bruteForceResults
+        );
+        this.allCohortStats = this._statsCache;
+        
+        // Aktualisiere Cache-Metadaten
+        this._statsDirty = false;
+        this._lastCriteriaJson = criteriaJson;
+        this._lastLogic = logic;
+        this._lastBruteForceResultsJson = bruteForceResultsJson;
+        
+        return this._statsCache;
     }
 
     _prepareComparisonData() {
@@ -344,6 +419,8 @@ class App {
     
     applyAndRefreshAll() {
         window.t2CriteriaManager.applyCriteria();
+        // Cache invalidieren da sich Kriterien geändert haben
+        this.invalidateStatsCache();
         this.recalculateAllStats();
         this.refreshCurrentTab();
         window.uiManager.markCriteriaSavedIndicator(false);
@@ -409,7 +486,10 @@ class App {
     }
 
     refreshCurrentTab() {
-        this.recalculateAllStats();
+        // Nur neu berechnen wenn Cache dirty ist
+        if (this._statsDirty) {
+            this.recalculateAllStats();
+        }
         this.renderCurrentTab();
         this.updateUI();
     }
@@ -510,6 +590,8 @@ class App {
             setTimeout(() => {
                 window.uiManager.hideAutoBfModals();
                 window.uiManager.showToast('Initial analysis complete.', 'success', 4000);
+                // Cache invalidieren da sich alle Brute-Force-Ergebnisse geändert haben
+                this.invalidateStatsCache();
                 this.recalculateAllStats();
                 this.refreshCurrentTab();
             }, 1000);

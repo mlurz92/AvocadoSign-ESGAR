@@ -362,14 +362,18 @@ window.studyT2CriteriaManager = (() => {
         return parts.join(separator);
     }
 
+    // PERFORMANCE: Return read-only reference instead of deep clone
+    // The literatureCriteriaSets array is a constant and should not be modified
+    // Callers should treat the returned data as immutable
     function getAllStudyCriteriaSets() {
-        return cloneDeep(literatureCriteriaSets);
+        return literatureCriteriaSets;
     }
 
+    // PERFORMANCE: Return read-only reference instead of deep clone
+    // If mutation is needed, caller should create their own copy
     function getStudyCriteriaSetById(id) {
         if (typeof id !== 'string') return null;
-        const foundSet = literatureCriteriaSets.find(set => set.id === id);
-        return foundSet ? cloneDeep(foundSet) : null;
+        return literatureCriteriaSets.find(set => set.id === id) || null;
     }
 
     function _evaluateNodeWithEsgarLogic(lymphNode, criteriaSet, patientTherapy) {
@@ -467,14 +471,17 @@ window.studyT2CriteriaManager = (() => {
         return { t2Status: null, positiveNodeCount: 0, evaluatedNodes: [] };
     }
 
+    // PERFORMANCE: Use spread operator instead of cloneDeep for patient copies
+    // Shallow copy is sufficient since we only add new properties, not modify nested ones
     function evaluateDatasetWithStudyCriteria(dataset, studyCriteriaSet) {
         if (!studyCriteriaSet) {
-            return (dataset || []).map(p => ({ ...cloneDeep(p), t2Status: null, countT2NodesPositive: 0, t2NodesEvaluated: [] }));
+            return (dataset || []).map(p => ({ ...p, t2Status: null, countT2NodesPositive: 0, t2NodesEvaluated: [] }));
         }
         if (!Array.isArray(dataset)) return [];
         return dataset.map(patient => {
             if (!patient) return null;
-            const patientCopy = cloneDeep(patient);
+            // PERFORMANCE: Shallow copy is sufficient - we only add new properties
+            const patientCopy = { ...patient };
             const { t2Status, positiveNodeCount, evaluatedNodes } = evaluatePatientWithStudyCriteria(patientCopy, studyCriteriaSet);
             patientCopy.t2Status = t2Status;
             patientCopy.countT2NodesPositive = positiveNodeCount;

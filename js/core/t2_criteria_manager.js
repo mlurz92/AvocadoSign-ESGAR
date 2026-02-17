@@ -16,12 +16,16 @@ window.t2CriteriaManager = (() => {
         isUnsaved = false;
     }
 
+    // PERFORMANCE: Return read-only reference instead of deep clone
+    // Callers should not mutate the returned object directly
+    // Use updateCriterionValue, toggleCriterionActive, etc. for modifications
     function getCurrentCriteria() {
-        return cloneDeep(currentCriteria);
+        return currentCriteria;
     }
 
+    // PERFORMANCE: Return read-only reference instead of deep clone
     function getAppliedCriteria() {
-        return cloneDeep(appliedCriteria);
+        return appliedCriteria;
     }
 
     function getCurrentLogic() {
@@ -168,14 +172,17 @@ window.t2CriteriaManager = (() => {
         return { t2Status: patientIsPositive ? '+' : '-', positiveNodeCount: positiveNodeCount, evaluatedNodes: evaluatedNodes };
     }
 
+    // PERFORMANCE: Use spread operator instead of cloneDeep for patient copies
+    // We only need a shallow copy since we're adding new properties, not modifying nested ones
     function evaluateDataset(dataset, criteria, logic) {
         if (!Array.isArray(dataset)) return [];
         if (!criteria || (logic !== 'AND' && logic !== 'OR' && logic !== 'KOMBINIERT')) {
-            return dataset.map(p => ({ ...cloneDeep(p), t2Status: null, countT2NodesPositive: 0, t2NodesEvaluated: (p.t2Nodes || []).map(lk => ({ ...lk, isPositive: false, checkResult: {} })) }));
+            return dataset.map(p => ({ ...p, t2Status: null, countT2NodesPositive: 0, t2NodesEvaluated: (p.t2Nodes || []).map(lk => ({ ...lk, isPositive: false, checkResult: {} })) }));
         }
         return dataset.map(patient => {
             if (!patient) return null;
-            const patientCopy = cloneDeep(patient);
+            // PERFORMANCE: Shallow copy is sufficient - we only add new properties
+            const patientCopy = { ...patient };
             const { t2Status, positiveNodeCount, evaluatedNodes } = evaluatePatient(patientCopy, criteria, logic);
             patientCopy.t2Status = t2Status;
             patientCopy.countT2NodesPositive = positiveNodeCount;

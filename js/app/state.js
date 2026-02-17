@@ -40,8 +40,9 @@ window.state = (() => {
             insightsView: loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.INSIGHTS_VIEW) ?? defaultState.insightsView,
             insightsPowerStudyId: loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.INSIGHTS_POWER_STUDY_ID) ?? defaultState.insightsPowerStudyId,
             insightsLiteratureSetId: loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.INSIGHTS_LITERATURE_SET_ID) ?? defaultState.insightsLiteratureSetId,
-            dataTableSort: cloneDeep(defaultState.dataTableSort),
-            analysisTableSort: cloneDeep(defaultState.analysisTableSort),
+            // PERFORMANCE: No cloneDeep needed - defaultState is already cloned, and we create new objects on update
+            dataTableSort: { ...defaultState.dataTableSort },
+            analysisTableSort: { ...defaultState.analysisTableSort },
             activeTabId: defaultState.activeTabId,
             publicationEditMode: loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.PUBLICATION_EDIT_MODE) ?? defaultState.publicationEditMode,
             editedManuscriptHTML: loadFromLocalStorage(window.APP_CONFIG.STORAGE_KEYS.EDITED_MANUSCRIPT_HTML) ?? defaultState.editedManuscriptHTML
@@ -67,10 +68,13 @@ window.state = (() => {
         return analysisContext?.cohortId ?? currentState.currentCohort;
     }
 
+    // PERFORMANCE: Return read-only reference instead of deep clone
+    // Callers should not mutate the returned object
     function getAnalysisContext() {
-        return analysisContext ? cloneDeep(analysisContext) : null;
+        return analysisContext;
     }
 
+    // PERFORMANCE: Clone only on write, not on read
     function setAnalysisContext(context) {
         analysisContext = context ? cloneDeep(context) : null;
     }
@@ -79,20 +83,30 @@ window.state = (() => {
         analysisContext = null;
     }
 
-    function getDataTableSort() { return cloneDeep(currentState.dataTableSort); }
+    // PERFORMANCE: Return read-only reference instead of deep clone
+    // updateDataTableSort creates new objects, so no mutation risk
+    function getDataTableSort() { return currentState.dataTableSort; }
     function updateDataTableSort(key, subKey = null) {
         if (currentState.dataTableSort.key === key && currentState.dataTableSort.subKey === subKey) {
-            currentState.dataTableSort.direction = currentState.dataTableSort.direction === 'asc' ? 'desc' : 'asc';
+            currentState.dataTableSort = { 
+                ...currentState.dataTableSort, 
+                direction: currentState.dataTableSort.direction === 'asc' ? 'desc' : 'asc' 
+            };
         } else {
             currentState.dataTableSort = { key, direction: 'asc', subKey };
         }
         return true;
     }
 
-    function getAnalysisTableSort() { return cloneDeep(currentState.analysisTableSort); }
+    // PERFORMANCE: Return read-only reference instead of deep clone
+    // updateAnalysisTableSort creates new objects, so no mutation risk
+    function getAnalysisTableSort() { return currentState.analysisTableSort; }
     function updateAnalysisTableSort(key, subKey = null) {
         if (currentState.analysisTableSort.key === key && currentState.analysisTableSort.subKey === subKey) {
-            currentState.analysisTableSort.direction = currentState.analysisTableSort.direction === 'asc' ? 'desc' : 'asc';
+            currentState.analysisTableSort = { 
+                ...currentState.analysisTableSort, 
+                direction: currentState.analysisTableSort.direction === 'asc' ? 'desc' : 'asc' 
+            };
         } else {
             currentState.analysisTableSort = { key, direction: 'asc', subKey };
         }

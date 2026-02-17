@@ -1,5 +1,54 @@
 window.statisticsService = (() => {
 
+    // --- Cache System for Expensive Calculations ---
+    const _calculationCache = new Map();
+    const _CACHE_MAX_SIZE = 500;
+    
+    /**
+     * Generiert einen Cache-Key aus einem Prefix und Argumenten
+     * @param {string} prefix - Cache-Key Prefix
+     * @param  {...any} args - Argumente für den Key
+     * @returns {string} Cache-Key
+     */
+    function _getCacheKey(prefix, ...args) {
+        try {
+            return prefix + JSON.stringify(args);
+        } catch (e) {
+            // Fallback für nicht-serialisierbare Objekte
+            return prefix + String(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)));
+        }
+    }
+    
+    /**
+     * Führt eine Berechnung mit Caching durch
+     * @param {string} key - Cache-Key
+     * @param {Function} calculateFn - Funktion die das Ergebnis berechnet
+     * @returns {any} Das Ergebnis (aus Cache oder neu berechnet)
+     */
+    function _cachedCalculation(key, calculateFn) {
+        if (_calculationCache.has(key)) {
+            return _calculationCache.get(key);
+        }
+        
+        // Cache-Größe begrenzen
+        if (_calculationCache.size >= _CACHE_MAX_SIZE) {
+            // Lösche älteste Einträge (erste 100)
+            const keysToDelete = Array.from(_calculationCache.keys()).slice(0, 100);
+            keysToDelete.forEach(k => _calculationCache.delete(k));
+        }
+        
+        const result = calculateFn();
+        _calculationCache.set(key, result);
+        return result;
+    }
+    
+    /**
+     * Löscht den gesamten Berechnungs-Cache
+     */
+    function clearCache() {
+        _calculationCache.clear();
+    }
+
     // --- Basic Statistical Helper Functions ---
 
     function getMedian(arr) {
@@ -178,22 +227,36 @@ window.statisticsService = (() => {
     function bootstrapCI(data, statisticFn, nBoot = window.APP_CONFIG.STATISTICAL_CONSTANTS.BOOTSTRAP_CI_REPLICATIONS, alpha = window.APP_CONFIG.STATISTICAL_CONSTANTS.BOOTSTRAP_CI_ALPHA) {
         const defaultReturn = { lower: NaN, upper: NaN, method: window.APP_CONFIG.STATISTICAL_CONSTANTS.DEFAULT_CI_METHOD_EFFECTSIZE, se: NaN };
         if (!Array.isArray(data) || data.length < 2) return defaultReturn;
-        const n = data.length;
-        const bootStats = [];
-        for (let i = 0; i < nBoot; i++) {
-            const bootSample = Array.from({length: n}, () => data[Math.floor(Math.random() * n)]);
-            try {
-                const stat = statisticFn(bootSample);
-                if (isFinite(stat)) bootStats.push(stat);
-            } catch (e) { }
-        }
-        if (bootStats.length < 2) return defaultReturn;
-        bootStats.sort((a, b) => a - b);
-        const lowerIndex = Math.floor(bootStats.length * (alpha / 2.0));
-        const upperIndex = Math.ceil(bootStats.length * (1 - alpha / 2.0)) - 1;
-        const finalLowerIndex = Math.max(0, Math.min(lowerIndex, bootStats.length - 1));
-        const finalUpperIndex = Math.max(0, Math.min(upperIndex, bootStats.length - 1));
-        return { lower: bootStats[finalLowerIndex], upper: bootStats[finalUpperIndex], method: window.APP_CONFIG.STATISTICAL_CONSTANTS.DEFAULT_CI_METHOD_EFFECTSIZE, se: getStdDev(bootStats) };
+        
+        // Cache-Key basierend auf Daten-Hash und Parametern
+        // Verwende eine einfache Hash-Funktion für die Daten
+        const dataHash = data.length + '_' + data.reduce((acc, val, idx) => {
+            // Nur erste und letzte paar Werte für Hash verwenden
+            if (idx < 3 || idx >= data.length - 3) {
+                return acc + String(val?.id || val?.nStatus || String(val).substring(0, 10));
+            }
+            return acc;
+        }, '');
+        const cacheKey = _getCacheKey('bootstrap_', dataHash, nBoot, alpha);
+        
+        return _cachedCalculation(cacheKey, () => {
+            const n = data.length;
+            const bootStats = [];
+            for (let i = 0; i < nBoot; i++) {
+                const bootSample = Array.from({length: n}, () => data[Math.floor(Math.random() * n)]);
+                try {
+                    const stat = statisticFn(bootSample);
+                    if (isFinite(stat)) bootStats.push(stat);
+                } catch (e) { }
+            }
+            if (bootStats.length < 2) return defaultReturn;
+            bootStats.sort((a, b) => a - b);
+            const lowerIndex = Math.floor(bootStats.length * (alpha / 2.0));
+            const upperIndex = Math.ceil(bootStats.length * (1 - alpha / 2.0)) - 1;
+            const finalLowerIndex = Math.max(0, Math.min(lowerIndex, bootStats.length - 1));
+            const finalUpperIndex = Math.max(0, Math.min(upperIndex, bootStats.length - 1));
+            return { lower: bootStats[finalLowerIndex], upper: bootStats[finalUpperIndex], method: window.APP_CONFIG.STATISTICAL_CONSTANTS.DEFAULT_CI_METHOD_EFFECTSIZE, se: getStdDev(bootStats) };
+        });
     }
 
     function calculateMcNemarTest(b, c) {
@@ -636,77 +699,83 @@ window.statisticsService = (() => {
 
     function performStratifiedKFoldCV(data, k = window.APP_CONFIG.STATISTICAL_CONSTANTS.CV_FOLDS) {
         if (!Array.isArray(data) || data.length < k) return null;
-
-        const positives = data.filter(p => p.nStatus === '+');
-        const negatives = data.filter(p => p.nStatus === '-');
         
-        const shuffle = (arr) => {
-            const array = [...arr];
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        };
+        // Cache-Key basierend auf Daten-Hash und k
+        const dataHash = data.length + '_' + data.slice(0, 5).map(p => p?.id || p?.nStatus).join('_');
+        const cacheKey = _getCacheKey('cv_', dataHash, k);
         
-        const posShuffled = shuffle(positives);
-        const negShuffled = shuffle(negatives);
-
-        const folds = Array.from({ length: k }, () => []);
-        posShuffled.forEach((p, i) => folds[i % k].push(p));
-        negShuffled.forEach((p, i) => folds[i % k].push(p));
-
-        const foldResults = [];
-
-        for (let i = 0; i < k; i++) {
-            const testSet = folds[i];
-            const trainSet = folds.filter((_, idx) => idx !== i).flat();
-
-            const { bestConfig } = _performExhaustiveGridSearchSync(trainSet);
-            const evaluatedTestSet = window.t2CriteriaManager.evaluateDataset(testSet.map(p => ({...p})), bestConfig.criteria, bestConfig.logic);
-            const perf = calculateDiagnosticPerformance(evaluatedTestSet, 't2Status', 'nStatus');
+        return _cachedCalculation(cacheKey, () => {
+            const positives = data.filter(p => p.nStatus === '+');
+            const negatives = data.filter(p => p.nStatus === '-');
             
-            foldResults.push({
-                fold: i + 1,
-                auc: perf.auc.value,
-                sens: perf.sens.value,
-                spec: perf.spec.value,
-                ppv: perf.ppv.value,
-                npv: perf.npv.value,
-                acc: perf.acc.value,
-                bestConfig: bestConfig,
-                nTest: testSet.length
-            });
-        }
+            const shuffle = (arr) => {
+                const array = [...arr];
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            };
+            
+            const posShuffled = shuffle(positives);
+            const negShuffled = shuffle(negatives);
 
-        const stats = (key) => {
-            const values = foldResults.map(r => r[key]).filter(v => !isNaN(v));
-            return { mean: getMean(values), sd: getStdDev(values) };
-        };
+            const folds = Array.from({ length: k }, () => []);
+            posShuffled.forEach((p, i) => folds[i % k].push(p));
+            negShuffled.forEach((p, i) => folds[i % k].push(p));
 
-        // Optimism calculation
-        const { bestConfig: bestOverallConfig } = _performExhaustiveGridSearchSync(data);
-        const apparentPerf = calculateDiagnosticPerformance(window.t2CriteriaManager.evaluateDataset(data.map(p => ({...p})), bestOverallConfig.criteria, bestOverallConfig.logic), 't2Status', 'nStatus');
-        const optimism = apparentPerf.auc.value - stats('auc').mean;
+            const foldResults = [];
 
-        return {
-            meanAUC: stats('auc').mean,
-            sdAUC: stats('auc').sd,
-            meanSens: stats('sens').mean,
-            sdSens: stats('sens').sd,
-            meanSpec: stats('spec').mean,
-            sdSpec: stats('spec').sd,
-            meanPPV: stats('ppv').mean,
-            sdPPV: stats('ppv').sd,
-            meanNPV: stats('npv').mean,
-            sdNPV: stats('npv').sd,
-            meanAcc: stats('acc').mean,
-            sdAcc: stats('acc').sd,
-            folds: k,
-            details: foldResults,
-            optimism: optimism,
-            apparentAUC: apparentPerf.auc.value
-        };
+            for (let i = 0; i < k; i++) {
+                const testSet = folds[i];
+                const trainSet = folds.filter((_, idx) => idx !== i).flat();
+
+                const { bestConfig } = _performExhaustiveGridSearchSync(trainSet);
+                const evaluatedTestSet = window.t2CriteriaManager.evaluateDataset(testSet.map(p => ({...p})), bestConfig.criteria, bestConfig.logic);
+                const perf = calculateDiagnosticPerformance(evaluatedTestSet, 't2Status', 'nStatus');
+                
+                foldResults.push({
+                    fold: i + 1,
+                    auc: perf.auc.value,
+                    sens: perf.sens.value,
+                    spec: perf.spec.value,
+                    ppv: perf.ppv.value,
+                    npv: perf.npv.value,
+                    acc: perf.acc.value,
+                    bestConfig: bestConfig,
+                    nTest: testSet.length
+                });
+            }
+
+            const stats = (key) => {
+                const values = foldResults.map(r => r[key]).filter(v => !isNaN(v));
+                return { mean: getMean(values), sd: getStdDev(values) };
+            };
+
+            // Optimism calculation
+            const { bestConfig: bestOverallConfig } = _performExhaustiveGridSearchSync(data);
+            const apparentPerf = calculateDiagnosticPerformance(window.t2CriteriaManager.evaluateDataset(data.map(p => ({...p})), bestOverallConfig.criteria, bestOverallConfig.logic), 't2Status', 'nStatus');
+            const optimism = apparentPerf.auc.value - stats('auc').mean;
+
+            return {
+                meanAUC: stats('auc').mean,
+                sdAUC: stats('auc').sd,
+                meanSens: stats('sens').mean,
+                sdSens: stats('sens').sd,
+                meanSpec: stats('spec').mean,
+                sdSpec: stats('spec').sd,
+                meanPPV: stats('ppv').mean,
+                sdPPV: stats('ppv').sd,
+                meanNPV: stats('npv').mean,
+                sdNPV: stats('npv').sd,
+                meanAcc: stats('acc').mean,
+                sdAcc: stats('acc').sd,
+                folds: k,
+                details: foldResults,
+                optimism: optimism,
+                apparentAUC: apparentPerf.auc.value
+            };
+        });
     }
 
     // --- Mismatch & Size Analysis ---
@@ -764,28 +833,59 @@ window.statisticsService = (() => {
             asPos: { values: [], stats: {} },
             asNeg: { values: [], stats: {} },
             categories: { small: 0, medium: 0, large: 0, total: 0 },
-            categoryPerformance: {} 
+            categoryPerformance: {},
+            // NEU: Korrekte Patient-Level Performance nach Größenkategorie
+            patientLevelPerformance: {
+                small: { patients: [], metrics: null },
+                medium: { patients: [], metrics: null },
+                large: { patients: [], metrics: null },
+                all: { patients: [], metrics: null }
+            },
+            // NEU: Knoten-Statistiken nach AS-Status
+            nodeSizeComparison: {
+                asPositive: { values: [], stats: {} },
+                asNegative: { values: [], stats: {} },
+                nPositive: { values: [], stats: {} },
+                nNegative: { values: [], stats: {} }
+            }
         };
 
         if (!Array.isArray(data)) return result;
 
         const allNodes = [];
+        
+        // PHASE 1: Knoten sammeln mit korrekter Proxy-Zuordnung
         data.forEach(p => {
             if (p.t2Nodes && p.t2Nodes.length > 0) {
                 p.t2Nodes.forEach(n => {
                     if (typeof n.size === 'number' && !isNaN(n.size)) {
-                        const nodeInfo = { size: n.size, nStatus: p.nStatus, asStatus: p.asStatus };
+                        const nodeInfo = { 
+                            size: n.size, 
+                            nStatus: p.nStatus, 
+                            asStatus: p.asStatus,
+                            // Kategorie nach eigener Knotengröße
+                            sizeCategory: n.size < 5.0 ? 'small' : (n.size < 9.0 ? 'medium' : 'large')
+                        };
                         allNodes.push(nodeInfo);
                         
                         result.all.values.push(n.size);
                         if (p.nStatus === '+') result.nPos.values.push(n.size);
                         else if (p.nStatus === '-') result.nNeg.values.push(n.size);
                         
-                        // Note: assigning AS status to node based on patient AS status is a proxy
-                        if (p.asStatus === '+') result.asPos.values.push(n.size);
-                        else if (p.asStatus === '-') result.asNeg.values.push(n.size);
+                        // Proxy-AS-Status für Knoten
+                        if (p.asStatus === '+') {
+                            result.asPos.values.push(n.size);
+                            result.nodeSizeComparison.asPositive.values.push(n.size);
+                        }
+                        else if (p.asStatus === '-') {
+                            result.asNeg.values.push(n.size);
+                            result.nodeSizeComparison.asNegative.values.push(n.size);
+                        }
+                        
+                        if (p.nStatus === '+') result.nodeSizeComparison.nPositive.values.push(n.size);
+                        else if (p.nStatus === '-') result.nodeSizeComparison.nNegative.values.push(n.size);
 
-                        // Categorization
+                        // Kategorisierung
                         if (n.size < 5.0) result.categories.small++;
                         else if (n.size < 9.0) result.categories.medium++;
                         else result.categories.large++;
@@ -795,7 +895,7 @@ window.statisticsService = (() => {
             }
         });
 
-        // Basic Stats per group
+        // PHASE 2: Basis-Statistiken berechnen
         const calc = (vals) => {
             if (vals.length === 0) return { mean: NaN, sd: NaN, median: NaN, min: NaN, max: NaN, n: 0 };
             return {
@@ -813,24 +913,88 @@ window.statisticsService = (() => {
         result.nNeg.stats = calc(result.nNeg.values);
         result.asPos.stats = calc(result.asPos.values);
         result.asNeg.stats = calc(result.asNeg.values);
+        
+        // Knoten-Größenvergleich
+        result.nodeSizeComparison.asPositive.stats = calc(result.nodeSizeComparison.asPositive.values);
+        result.nodeSizeComparison.asNegative.stats = calc(result.nodeSizeComparison.asNegative.values);
+        result.nodeSizeComparison.nPositive.stats = calc(result.nodeSizeComparison.nPositive.values);
+        result.nodeSizeComparison.nNegative.stats = calc(result.nodeSizeComparison.nNegative.values);
 
-        // Max Node Size Performance Analysis
-        // Group patients by their Max Node Size category
-        const cats = { small: [], medium: [], large: [] };
+        // PHASE 3: Korrekte Patient-Level Performance nach Größenkategorie
+        // Ein Patient wird als "hat Knoten in Kategorie X" klassifiziert,
+        // wenn mindestens ein Lymphknoten in dieser Kategorie vorhanden ist
+        
+        const categoryPatients = { small: [], medium: [], large: [], all: [] };
+        
         data.forEach(p => {
-            if (p.maxNodeSizeCategory) {
-                cats[p.maxNodeSizeCategory].push(p);
+            // Finde alle Knotengrößenkategorien für diesen Patienten
+            const patientCategories = new Set();
+            
+            if (p.t2Nodes && p.t2Nodes.length > 0) {
+                p.t2Nodes.forEach(n => {
+                    if (typeof n.size === 'number' && !isNaN(n.size)) {
+                        if (n.size < 5.0) patientCategories.add('small');
+                        else if (n.size < 9.0) patientCategories.add('medium');
+                        else patientCategories.add('large');
+                    }
+                });
+            }
+            
+            // Patient zur entsprechenden Kategorie hinzufügen
+            // Ein Patient kann in mehreren Kategorien sein!
+            patientCategories.forEach(cat => {
+                if (!categoryPatients[cat].find(pat => pat.id === p.id)) {
+                    categoryPatients[cat].push(p);
+                }
+            });
+            
+            // Für "all" werden alle Patienten mit mindestens einem Knoten hinzugefügt
+            if (p.t2Nodes && p.t2Nodes.length > 0) {
+                if (!categoryPatients.all.find(pat => pat.id === p.id)) {
+                    categoryPatients.all.push(p);
+                }
             }
         });
 
-        Object.keys(cats).forEach(cat => {
-            result.categoryPerformance[cat] = {
-                count: cats[cat].length,
-                performanceAS: calculateDiagnosticPerformance(cats[cat], 'asStatus', 'nStatus'),
-                // Only meaningful if T2 criteria are applied, calculated dynamically in UI usually
-                // but we can't do it here without the current criteria.
-            };
+        // Berechne Metriken für jede Kategorie
+        Object.keys(categoryPatients).forEach(cat => {
+            const patients = categoryPatients[cat];
+            if (patients.length > 0) {
+                // AS-Performance für diese Patientengruppe
+                const asMetrics = calculateDiagnosticPerformance(patients, 'asStatus', 'nStatus');
+                
+                result.patientLevelPerformance[cat] = {
+                    patientCount: patients.length,
+                    nodeCount: cat === 'all' 
+                        ? result.categories.total 
+                        : (cat === 'small' ? result.categories.small : 
+                           cat === 'medium' ? result.categories.medium : 
+                           result.categories.large),
+                    metrics: {
+                        sensitivity: asMetrics?.sens?.value ?? null,
+                        specificity: asMetrics?.spec?.value ?? null,
+                        ppv: asMetrics?.ppv?.value ?? null,
+                        npv: asMetrics?.npv?.value ?? null,
+                        accuracy: asMetrics?.acc?.value ?? null,
+                        auc: asMetrics?.auc?.value ?? null,
+                        // Mit Konfidenzintervallen
+                        sensitivityCI: asMetrics?.sens?.ci ?? null,
+                        specificityCI: asMetrics?.spec?.ci ?? null,
+                        aucCI: asMetrics?.auc?.ci ?? null,
+                        // Confusion Matrix
+                        matrix: asMetrics?.matrix ?? null
+                    }
+                };
+            }
         });
+
+        // Kategorie-Percents hinzufügen
+        const total = result.categories.total;
+        result.categories.percentages = {
+            small: total > 0 ? (result.categories.small / total * 100).toFixed(1) : 0,
+            medium: total > 0 ? (result.categories.medium / total * 100).toFixed(1) : 0,
+            large: total > 0 ? (result.categories.large / total * 100).toFixed(1) : 0
+        };
 
         return result;
     }
@@ -1050,7 +1214,8 @@ window.statisticsService = (() => {
         calculateAggregateNodeCounts,
         performStratifiedKFoldCV,
         identifyFalseNegatives,
-        identifyDiscordantCases
+        identifyDiscordantCases,
+        clearCache
     });
 
 })();

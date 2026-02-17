@@ -316,9 +316,94 @@ window.uiComponents = (() => {
         if (!sizeData) return '<p class="text-muted small p-2">Size analysis data not available.</p>';
         const texts = window.APP_CONFIG.UI_TEXTS.insightsTab.sizeAnalysis, na = window.APP_CONFIG.NA_PLACEHOLDER;
         const createStatsRow = (label, stats) => `<tr><td>${label}</td><td>${formatNumber(stats.n, 0, na)}</td><td>${formatNumber(stats.mean, 1, na)} ± ${formatNumber(stats.sd, 1, na)}</td><td>${formatNumber(stats.median, 1, na)}</td><td>${formatNumber(stats.min, 1, na)} - ${formatNumber(stats.max, 1, na)}</td></tr>`;
+        
+        // Knotengrößen-Statistiken
         const statsTableHTML = `<h6 class="mb-2">Descriptive Statistics (Short-axis Diameter, mm)</h6><div class="table-responsive mb-4"><table class="table table-sm table-striped small table-hover border"><thead class="table-light"><tr><th>Group</th><th>Count (Nodes)</th><th>Mean ± SD</th><th>Median</th><th>Range</th></tr></thead><tbody>${createStatsRow('All Nodes', sizeData.all.stats)}${createStatsRow('Pathology Positive (N+, Patient-level proxy)', sizeData.nPos.stats)}${createStatsRow('Pathology Negative (N-, Patient-level proxy)', sizeData.nNeg.stats)}${createStatsRow('Avocado Sign Positive (AS+, Patient-level proxy)', sizeData.asPos.stats)}${createStatsRow('Avocado Sign Negative (AS-, Patient-level proxy)', sizeData.asNeg.stats)}</tbody></table></div>`;
+        
+        // NEU: Patient-Level Performance nach Größenkategorie
+        const createPerformanceRow = (category, data) => {
+            if (!data || !data.metrics) return '';
+            const m = data.metrics;
+            const sens = m.sensitivity !== null ? (m.sensitivity * 100).toFixed(1) + '%' : na;
+            const spec = m.specificity !== null ? (m.specificity * 100).toFixed(1) + '%' : na;
+            const ppv = m.ppv !== null ? (m.ppv * 100).toFixed(1) + '%' : na;
+            const npv = m.npv !== null ? (m.npv * 100).toFixed(1) + '%' : na;
+            const acc = m.accuracy !== null ? (m.accuracy * 100).toFixed(1) + '%' : na;
+            const auc = m.auc !== null ? m.auc.toFixed(2) : na;
+            const patients = data.patientCount || 0;
+            const nodes = data.nodeCount || 0;
+            return `<tr><td>${category}</td><td>${patients} / ${nodes}</td><td>${sens}</td><td>${spec}</td><td>${ppv}</td><td>${npv}</td><td>${acc}</td><td>${auc}</td></tr>`;
+        };
+        
+        // Patient-Level Performance Tabelle
+        let performanceHTML = '';
+        if (sizeData.patientLevelPerformance) {
+            const plp = sizeData.patientLevelPerformance;
+            performanceHTML = `
+                <h6 class="mb-2 mt-4">Patient-Level Performance by Node Size Category</h6>
+                <p class="small text-muted mb-3">Patienten werden als "positiv für Kategorie X" klassifiziert, wenn mindestens ein Lymphknoten in dieser Größenkategorie vorhanden ist.</p>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-striped small table-hover border">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Size Category</th>
+                                <th>Patients / Nodes</th>
+                                <th>Sensitivity</th>
+                                <th>Specificity</th>
+                                <th>PPV</th>
+                                <th>NPV</th>
+                                <th>Accuracy</th>
+                                <th>AUC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${createPerformanceRow('< 5mm (small)', plp.small)}
+                            ${createPerformanceRow('5-9mm (medium)', plp.medium)}
+                            ${createPerformanceRow('>= 9mm (large)', plp.large)}
+                            ${createPerformanceRow('All Sizes', plp.all)}
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+        
+        // Größenverteilung
+        const sizeDist = sizeData.categories;
+        const sizeDistHTML = sizeDist ? `
+            <div class="mb-4">
+                <h6 class="mb-2">Knotengrößen-Verteilung</h6>
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="card h-100 border">
+                            <div class="card-body p-2">
+                                <h7 class="text-muted">Small (< 5mm)</h7>
+                                <h4 class="text-primary">${sizeDist.small || 0}</h4>
+                                <small class="text-muted">${sizeDist.percentages?.small || 0}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 border">
+                            <div class="card-body p-2">
+                                <h7 class="text-muted">Medium (5-9mm)</h7>
+                                <h4 class="text-primary">${sizeDist.medium || 0}</h4>
+                                <small class="text-muted">${sizeDist.percentages?.medium || 0}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 border">
+                            <div class="card-body p-2">
+                                <h7 class="text-muted">Large (>= 9mm)</h7>
+                                <h4 class="text-primary">${sizeDist.large || 0}</h4>
+                                <small class="text-muted">${sizeDist.percentages?.large || 0}%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>` : '';
+        
         const chartsHTML = `<div class="row g-4 mb-4"><div class="col-lg-6"><div class="card h-100"><div class="card-header small fw-bold">${texts.sizeDistChart}</div><div class="card-body p-2 d-flex align-items-center justify-content-center"><div id="chart-size-distribution" class="w-100" style="height: 300px;"></div></div></div></div><div class="col-lg-6"><div class="card h-100"><div class="card-header small fw-bold">${texts.sizeBoxPlot}</div><div class="card-body p-2 d-flex align-items-center justify-content-center"><div id="chart-size-boxplot" class="w-100" style="height: 300px;"></div></div></div></div></div>`;
-        return `<div class="container-fluid p-0"><p class="small text-muted mb-3">${texts.description}</p>${statsTableHTML}${chartsHTML}</div>`;
+        return `<div class="container-fluid p-0"><p class="small text-muted mb-3">${texts.description}</p>${statsTableHTML}${sizeDistHTML}${performanceHTML}${chartsHTML}</div>`;
     }
 
     return Object.freeze({
