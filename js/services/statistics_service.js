@@ -1077,7 +1077,12 @@ window.statisticsService = (() => {
                             criteria: bfResult.bestResult.criteria, 
                             logic: bfResult.bestResult.logic, 
                             metricValue: bfResult.bestResult.metricValue, 
-                            metricName: bfResult.metric 
+                            metricName: bfResult.metric,
+                            totalTested: bfResult.totalTested,
+                            duration: bfResult.duration,
+                            nTotal: bfResult.nTotal,
+                            nPlus: bfResult.nPlus,
+                            nMinus: bfResult.nMinus
                         };
                     }
                 });

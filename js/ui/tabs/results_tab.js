@@ -390,6 +390,213 @@ window.resultsTab = (() => {
     }
 
     /**
+     * Formatiert ein criteria-Objekt in einen lesbaren String
+     * @param {Object} criteria - Das criteria-Objekt aus bruteforceDefinitions
+     * @returns {string} - Formatierte Kriterien als lesbarer String
+     */
+    function _formatCriteriaToString(criteria) {
+        if (!criteria || typeof criteria !== 'object') {
+            return 'N/A';
+        }
+
+        const parts = [];
+
+        // Size criterion
+        if (criteria.size && criteria.size.active) {
+            const threshold = criteria.size.threshold;
+            const condition = criteria.size.condition || '>=';
+            if (typeof threshold === 'number') {
+                parts.push(`size ${condition} ${threshold.toFixed(1)}mm`);
+            }
+        }
+
+        // Shape criterion
+        if (criteria.shape && criteria.shape.active && criteria.shape.value) {
+            parts.push(`${criteria.shape.value} shape`);
+        }
+
+        // Border criterion
+        if (criteria.border && criteria.border.active && criteria.border.value) {
+            parts.push(`${criteria.border.value} border`);
+        }
+
+        // Homogeneity criterion
+        if (criteria.homogeneity && criteria.homogeneity.active && criteria.homogeneity.value) {
+            parts.push(`${criteria.homogeneity.value}`);
+        }
+
+        // Signal criterion
+        if (criteria.signal && criteria.signal.active && criteria.signal.value) {
+            // Format signal value for display (e.g., "lowSignal" -> "low signal")
+            const signalDisplay = criteria.signal.value
+                .replace(/Signal$/, ' signal')
+                .replace(/([a-z])([A-Z])/g, '$1 $2')
+                .toLowerCase();
+            parts.push(signalDisplay);
+        }
+
+        return parts.length > 0 ? parts.join(' AND ') : 'N/A';
+    }
+
+    /**
+     * Erstellt die Brute-Force Parameters Sektion mit detaillierten Informationen
+     * für wissenschaftliche Publikationen (basierend auf Revision Letter Anforderungen)
+     * Iteriert über alle Kohorten und zeigt die optimierten Kriterien für jede Kohorte an
+     */
+    function _createBruteforceParametersSection(allStats) {
+        // Liste aller Kohorten, die Brute-Force-Ergebnisse haben können
+        const cohortIds = ['Overall', 'surgeryAlone', 'neoadjuvantTherapy'];
+        
+        // Sammle alle Kohorten mit Brute-Force-Daten
+        const cohortsWithData = [];
+        let totalTested = 'N/A';
+        
+        cohortIds.forEach(cohortId => {
+            const bruteforceDefs = allStats[cohortId]?.bruteforceDefinitions;
+            if (bruteforceDefs && Object.keys(bruteforceDefs).length > 0) {
+                cohortsWithData.push({
+                    cohortId: cohortId,
+                    bruteforceDefs: bruteforceDefs
+                });
+                
+                // Extrahiere totalTested aus den ersten verfügbaren Definition
+                if (totalTested === 'N/A') {
+                    const firstDef = Object.values(bruteforceDefs)[0];
+                    if (firstDef?.totalTested !== undefined) {
+                        totalTested = firstDef.totalTested.toLocaleString();
+                    }
+                }
+            }
+        });
+        
+        if (cohortsWithData.length === 0) {
+            return '<p class="text-muted small">No Brute-Force parameter data available.</p>';
+        }
+
+        // Grid Search Approach Beschreibung
+        const gridSearchDescription = `
+            <div class="mb-4">
+                <h6 class="border-bottom pb-2 mb-3">Grid Search Approach</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Exhaustive grid search across all permutations of morphological T2 criteria</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Incremental step size: 0.1 mm for size thresholds (range: 0.1–25.0 mm)</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Validation: Stratified 10-fold cross-validation with optimism correction</li>
+                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Optimization criterion: Maximization of selected metric (e.g., Balanced Accuracy, Youden Index)</li>
+                </ul>
+            </div>
+        `;
+
+        // Detaillierte Parameter-Tabelle
+        const parameterTable = `
+            <div class="mb-4">
+                <h6 class="border-bottom pb-2 mb-3">Parameters Tested</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 30%;">Parameter</th>
+                                <th>Values Tested</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Size threshold</strong></td>
+                                <td>0.1–25.0 mm (0.1 mm increments)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Shape</strong></td>
+                                <td>round, oval</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Border</strong></td>
+                                <td>sharp, irregular</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Homogeneity</strong></td>
+                                <td>homogeneous, heterogeneous</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Signal intensity</strong></td>
+                                <td>lowSignal, intermediateSignal, highSignal</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Logic operators</strong></td>
+                                <td>AND, OR</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        // Gesamtanzahl der getesteten Permutationen
+        const permutationsInfo = `
+            <div class="alert alert-info py-2 mb-4">
+                <strong><i class="fas fa-calculator me-2"></i>Total Permutations Tested:</strong> ${totalTested}
+            </div>
+        `;
+
+        // Optimierte Kriterien pro Metrik und Kohorte (kompakte Tabelle)
+        const optimizedCriteriaRows = [];
+        cohortsWithData.forEach(({ cohortId, bruteforceDefs }) => {
+            const cohortDisplayName = getCohortDisplayName(cohortId);
+            Object.entries(bruteforceDefs).forEach(([metricName, def]) => {
+                const criteriaString = _formatCriteriaToString(def.criteria);
+                optimizedCriteriaRows.push(`
+                    <tr>
+                        <td><strong>${metricName}</strong></td>
+                        <td>${cohortDisplayName}</td>
+                        <td><code>${criteriaString}</code></td>
+                        <td>${def.logic || 'N/A'}</td>
+                        <td>${def.metricValue !== undefined ? (def.metricValue * 100).toFixed(2) + '%' : 'N/A'}</td>
+                    </tr>
+                `);
+            });
+        });
+
+        const optimizedCriteriaTable = `
+            <div class="mb-3">
+                <h6 class="border-bottom pb-2 mb-3">Optimised Criteria by Metric and Cohort</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Optimization Metric</th>
+                                <th>Cohort</th>
+                                <th>Optimised Criteria</th>
+                                <th>Logic</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${optimizedCriteriaRows.join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        return `
+            <div class="bruteforce-parameters-section">
+                ${gridSearchDescription}
+                ${parameterTable}
+                ${permutationsInfo}
+                ${optimizedCriteriaTable}
+            </div>
+        `;
+    }
+
+    /**
+     * Erstellt die Brute-Force Definitions Tabelle für eine Kohorte
+     * @deprecated Use _createBruteforceParametersSection instead
+     */
+    function _createBruteforceDefinitionsTable(allStats, cohortId) {
+        // Wrapper für Rückwärtskompatibilität
+        // Wenn cohortId angegeben wird, wird es ignoriert - die neue Funktion iteriert über alle Kohorten
+        return _createBruteforceParametersSection(allStats);
+    }
+
+    /**
      * Haupt-Render-Funktion
      */
     function render(allStats) {
@@ -486,9 +693,15 @@ window.resultsTab = (() => {
                         <h5 class="mb-0"><i class="fas fa-cogs me-2 text-warning"></i>4. Cohort-Optimised T2 Criteria</h5>
                     </div>
                     <div class="card-body">
-                        <p class="card-text small text-muted mb-3">
-                            Optimised via exhaustive grid search (Brute-Force) for Balanced Accuracy with stratified 10-fold cross-validation.
-                        </p>
+                        <!-- Brute-Force Parameters Section -->
+                        <div class="mb-4">
+                            ${_createBruteforceParametersSection(allStats)}
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Performance by Cohort -->
+                        <h6 class="border-bottom pb-2 mb-3">Performance by Cohort (Balanced Accuracy Optimisation)</h6>
                         <div class="row">
                             <div class="col-md-4">
                                 <h6 class="border-bottom pb-2 mb-3">Overall Cohort</h6>
